@@ -1,4 +1,4 @@
-CC=gcc
+CC=g++
 YACC=bison
 LEX=flex
 COFLAGS=-g -O2
