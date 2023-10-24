@@ -7,6 +7,10 @@
 #include <cassert>
 #include <unistd.h>
 #include <syscall.h>
+#include <errno.h>
+#include <string.h>
+
+#include "shell.h"
 
 // clearing the shell using escape sequences
 #define clear() printf("\033[H]033]J")
@@ -21,6 +25,6 @@ void init_shell() {
   clear();
 }
 
-int main() {
+int main(int argc, char **argv) {
   return 0;
 }
