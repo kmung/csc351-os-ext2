@@ -12,6 +12,8 @@ The app is composed of the filesystem and the shell to accompany the filesystem.
 ### Git quck instructions
 - Initialize your project
     - $ git init
+- To create your own branch
+    - $ git checkout -b {new branch name}
 - Once you've made code changes:
     - $ git status (can skip this step)
     - $ git add .
