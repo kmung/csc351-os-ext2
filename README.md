@@ -19,3 +19,7 @@ The app is composed of the filesystem and the shell to accompany the filesystem.
     - $ git push {branch name}
 - To push your changes to the main repo
     - $ git push origin main
+
+### Important!!!
+- Make sure to pull from the main repo first before pushing to main
+    - $ git pull
