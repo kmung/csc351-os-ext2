@@ -27,3 +27,11 @@ The app is composed of the filesystem and the shell to accompany the filesystem.
 ### Important!!!
 - Make sure to pull from the main repo first before pushing to main
     - $ git pull
+
+## File System Overview
+The File System (FS) shall be sized at 2GB of raw storage, and shall be implemented within a file on the computer.
+The program shall have the ability to create the file system, upon request. Otherwise, the program shall communicate via TCP sockets.
+When the FS is told to shutdown, the FS program shall terminate cleanly. Upon starting again, the FS shall be in the same state as it was when it shut down.
+
+### FS Block Size
+The FS shall use 4KB block size and for each time a file needs to be lengthened, it shall allocate 8 more blocks.
