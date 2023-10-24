@@ -14,6 +14,8 @@ The app is composed of the filesystem and the shell to accompany the filesystem.
     - $ git init
 - To create your own branch
     - $ git checkout -b {new branch name}
+- Switch between branches
+    - $ git checkout {branch name}
 - Once you've made code changes:
     - $ git status (can skip this step)
     - $ git add .
