@@ -15,6 +15,7 @@ Inode::Inode(mode_t mode, int id) {
 }
 
 //******************************************************************************
+// set inode's atime, mtime ,and ctime in that order
 void Inode::setTimes(time_t atime, time_t mtime, time_t ctime) {
     i_atime = atime;
     i_mtime = mtime;
@@ -22,11 +23,13 @@ void Inode::setTimes(time_t atime, time_t mtime, time_t ctime) {
 }
 
 //******************************************************************************
+// set inode's number of blocks
 void Inode::setBlocks(int blocks) {
     i_blocks = blocks;
 }
 
 //******************************************************************************
+// display inode's info
 void Inode::displayInfo() const {
     cout << "File Mode: " << i_mode << endl;
     cout << "Number of Hard Links: " << i_nlink << endl;
