@@ -1,46 +1,34 @@
 #ifndef FS_H
 #define FS_H
 
-//ext2 based fs
-struct fs {
-  unsigned long inodes_per_block; // number of inodes per block
-  unsigned long blocks_per_group; // number of blocks in a group
-  unsigned long inodes_per_group; // number of inodes in a group
-  unsigned long group_desc_count; // number of group descriptor blocks
-  unsigned long desc_per_block; // number of group descriptors per block
-  unsigned long groups_count; // number of groups in the fs
-};
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+#include <fcntl.h>
+#include <unistd.h>
+
+#include "inode.h"
 
 // FS date
-#define FS_DATE "10/24/2023"
+#define FS_DATE "10/24/2023
 
-// special inode numbers
-#define FS_BAD_INO 1 // bad blocks inode
-#define FS_ROOT_INO 2 // Root inode
-#define FS_BOOT_LOADER_INO 5 // boot loader inode
-#define FS_UNDEL_DIR_INO 6 // undelete directory inode
+using namespace std;
 
-// structure of the super block
-struct fs_super_block
-{
-  // inodes count
-  // blocks count
-  // free blocks count
-  // free inodes count
-  // mount time
-  // write time
-  // default uid for reserved blocks
-  // default gid for reserved blocks
+//******************************************************************************
+// ext2 based fs
+class fs {
+	private:
+		
+	public:
+		fs(string pathname="");
+		~fs();
+
+		// refer to https://man7.org/linux/man-pages/man2/syscalls.2.html for more
+		int my_creat(const char *pathname, mode_t mode);
+		int my_open(const char *pathname);
+		ssize_t read(int fd, void buf[.count], size_t count);
+		ssize_t write(int fd, const void buf[.count], size_t count);
+
 };
-
-// structure of directory entry
-struct fs_dir_entry {
-  // inode number
-  // directory entry length
-  // name length
-  // file type
-  // file name
-};
-
 
 #endif
