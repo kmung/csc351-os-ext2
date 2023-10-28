@@ -1,8 +1,12 @@
 #ifndef INODE_H
 #define INODE_H
 
+#include <string>
 #include <sys/stat.h>
+#include <stdio.h>
 #include <ctime>
+
+using namespace std;
 
 // special inode numbers
 #define FS_BAD_INO 1         // bad blocks inode
@@ -11,10 +15,12 @@
 #define FS_UNDEL_DIR_INO 6   // undelete directory inode
 
 // structure of inode
-class inode {
+class Inode {
 	private:
 		// file mode
 		mode_t i_mode;
+		// unique identifier
+		int i_id;
 		// number of hard links count
 		int i_nlink;
 		// 16 bits of Owner Uid
@@ -23,20 +29,27 @@ class inode {
 		short i_gid;
 		// size in bytes
 		int i_size;
-		// index of file's starting location
-		int i_address;
 		// access time
-		clock_t i_atime;
+		time_t i_atime;
 		// modification time
-		clock_t i_mtime;
+		time_t i_mtime;
 		// creation time
-		clock_t i_ctime;
+		time_t i_ctime;
 		// number of blocks occupied
 		int i_blocks;
 
 	public:
-		inode(mode_t i_mode, int i_address);
-		~inode();
+		// constructor
+		Inode(mode_t mode, int id);
+
+		// set inode's atime, mtime, and ctime in that order
+		void setTimes(time_t atime, time_t mtime, time_t ctime);
+
+		// set inode's number of blocks
+		void setBlocks(int blocks);
+
+		// display inode's info
+		void displayInfo() const;
 };
 
 #endif
