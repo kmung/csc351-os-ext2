@@ -12,6 +12,8 @@
 
 #include "shell.h"
 
+using namespace std;
+
 // clearing the shell using escape sequences
 #define clear() printf("\033[H\033[J")
 
