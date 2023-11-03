@@ -16,4 +16,4 @@ clean:
 	-rm -f *.o lex.yy.c
 
 distclean:
-	-rm -f *.o
+	-rm -f *.o client server lex.yy.c

@@ -23,7 +23,6 @@ int main() {
     return EXIT_FAILURE;
   }
 
-
   // server details
   struct sockaddr_in serverAddress;
   serverAddress.sin_family = AF_INET;
