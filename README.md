@@ -9,6 +9,9 @@ When the FS is told to shutdown, the FS program shall terminate cleanly. Upon st
 ### FS Block Size
 The FS shall use 4KB block size and for each time a file needs to be lengthened, it shall allocate 8 more blocks.
 
+## The Shell
+The shell should be similar in behavior as the Bourne shell.
+
 ## Git basics
 ### Installing Git
 [Git Documentation](https://git-scm.com/docs)
