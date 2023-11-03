@@ -10,7 +10,7 @@ When the FS is told to shutdown, the FS program shall terminate cleanly. Upon st
 The FS shall use 4KB block size and for each time a file needs to be lengthened, it shall allocate 8 more blocks.
 
 ## The Shell
-The shell should be similar in behavior as the Bourne shell.
+The shell should be similar in behavior as the Bourne shell. Each command is done without dash options. Wildcards not implemented.
 
 ## Git basics
 ### Installing Git
