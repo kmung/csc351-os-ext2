@@ -6,8 +6,8 @@
 
 int main(int argc, char *argv[]);
 
-#define BUF_SIZE 4096
-#define OUTPUT_MODE 0700
+#define BUF_SIZE 4096 // use a buffer size of 4096 bytes
+#define OUTPUT_MODE 0700 // gives read/write/search permissions to owner only
 
 int main(int argc, char *argv[]) {
   int in_fd; // holds file descriptor
@@ -18,6 +18,8 @@ int main(int argc, char *argv[]) {
 
   char buffer[BUF_SIZE];
 
+  // check for proper number of command line arguments
+  // the program name, the source file, and the destination file
   if (argc != 3) exit(1); // syntax error if argc is not 3
 
   // open the file and create the ouput file

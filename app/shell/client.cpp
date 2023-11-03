@@ -14,12 +14,14 @@ using namespace std;
 
 // define port number to listen to
 #define PORT 8080 // port 8080 is common application web server port
+#define MAX_BUFFER_SIZE 1024 // max buffer size for incoming data, server can receive up to 1024 bytes of data at a time from the client
 
  int main() {
 
   /*
   * TODO: need to get the IP address of the server.
   * For now, assume the client and server are on the same machine
+  * Use the loopback address, 127.0.0.1
   */
 
   // create the client socket
@@ -33,7 +35,7 @@ using namespace std;
   struct sockaddr_in serverAddress;
   serverAddress.sin_family = AF_INET;
   serverAddress.sin_port = htons(PORT); // port to connect to
-  // modify later
+  // modify later?
   serverAddress.sin_addr.s_addr = inet_addr("127.0.0.1"); // hardcoded IP address of the loopback server
 
   // connect to the server
@@ -47,7 +49,7 @@ using namespace std;
   send(client, msg, strlen(msg), 0);
 
   // receive from the server
-  char buffer[1024] = {0};
+  char buffer[MAX_BUFFER_SIZE] = {0};
   recv(client, buffer, sizeof(buffer), 0);
   cout << "from server: " << buffer << endl;
 
