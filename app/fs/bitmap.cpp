@@ -3,17 +3,18 @@
 using namespace std;
 
 //******************************************************************************
-bitmap::bitmap(int size) {
+// constructor
+Bitmap::Bitmap(int size) {
     this->size = size;
 
-    // Calculate the number of bytes needed for the bitmap
+    // Calculate the number of bytes needed for the Bitmap
     int numBytes = (size + 7) / 8;
     // Initialize all bytes to 0
     data.resize(numBytes, 0);
 }
 
 //******************************************************************************
-bool bitmap::setBit(int pos) {
+bool Bitmap::setBit(int pos) {
     bool rc = pos < size ? true : false;
 
     if (rc) {
@@ -27,7 +28,7 @@ bool bitmap::setBit(int pos) {
 }
 
 //******************************************************************************
-bool bitmap::clearBit(int pos) {
+bool Bitmap::clearBit(int pos) {
     bool rc = pos < size ? true : false;
 
     if (rc) {
@@ -41,7 +42,7 @@ bool bitmap::clearBit(int pos) {
 }
 
 //******************************************************************************
-bool bitmap::isBitSet(int pos) const {
+bool Bitmap::isBitSet(int pos) const {
     bool rc = pos < size ? true : false;
 
     if (rc) {

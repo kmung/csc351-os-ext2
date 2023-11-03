@@ -4,13 +4,13 @@
 #include <iostream>
 #include <vector>
 
-class bitmap {
+class Bitmap {
 	private:
 		int size;
 		std::vector<unsigned char> data; // Store the bitmap data as bytes
 	
 	public:
-		bitmap(int size);
+		Bitmap(int size);
 
         // Returns true if bit at the given position is set
         // Otherwise, returns false if given position is out of range
