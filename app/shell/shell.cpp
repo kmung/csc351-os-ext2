@@ -25,43 +25,21 @@ using namespace std;
 // shell greeting during start up
 void init_shell() {
   clear();
-  printf("\n\n\n\n*******************");
-  printf("\n\n\t*****The Shell*****");
-  printf("\n\n\n\n*******************");
+  printf("\n\n\n\n\t********************************************");
+  printf("\n\n\t*****The Creative Awesome Shell - Crash*****");
+  printf("\n\n\t********************************************\n\n");
 
   sleep(1);
-  clear();
+  //clear();
 }
-
-int main(int argc, char **argv) {
-
-  // call the shell greeting
-  init_shell();
 
   /*
   TODO: write a REPL : Read-Eval-Print-Loop
   */
-
- int sock = socket(AF_INET, SOCK_STREAM, 0);
- if (sock < 0) {
-   cerr << "Error: Cannot create client socket." << endl;
-   return EXIT_FAILURE;
- }
-
-  // incoming server details
-  struct sockaddr_in serverAddress;
-  serverAddress.sin_family = AF_INET;
-  serverAddress.sin_port = htons(SERVER_PORT); // port to connect to
-  serverAddress.sin_addr.s_addr = INADDR_ANY;
-
-  // connect to the server
-  if (connect(sock, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) {
-    cerr << "Error connecting to the server." << endl;
-    return EXIT_FAILURE;
-  }
-
+ void repl(int sock) {
   char buffer[MAX_BUFFER_SIZE];
-  char cwd[MAX_BUFFER_SIZE];
+  char cwd[MAX_BUFFER_SIZE]; // to store the current working directory
+  string input;
 
   while (true) {
     // get the current working directory
@@ -85,8 +63,42 @@ int main(int argc, char **argv) {
       break;
     }
 
-    cout << buffer << endl;
+    //cout << buffer << endl;
+
+    // do something with user input
+    if (input == "exit") {
+      break;
+    }
+
   }
+ }
+
+int main(int argc, char **argv) {
+
+  // call the shell greeting
+  init_shell();
+
+ int sock = socket(AF_INET, SOCK_STREAM, 0);
+ if (sock < 0) {
+   cerr << "Error: Cannot create client socket." << endl;
+   return EXIT_FAILURE;
+ }
+
+  // incoming server details
+  struct sockaddr_in serverAddress;
+  serverAddress.sin_family = AF_INET;
+  serverAddress.sin_port = htons(SERVER_PORT); // port to connect to
+  serverAddress.sin_addr.s_addr = INADDR_ANY;
+
+  // connect to the server
+  if (connect(sock, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) {
+    cerr << "Error connecting to the server." << endl;
+    return EXIT_FAILURE;
+  }
+
+  
+  // call the repl function here
+  repl(sock);
 
   close(sock);
  
