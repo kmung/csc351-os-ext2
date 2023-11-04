@@ -24,40 +24,37 @@ int create_disk(){
 	size_t num_blocks = memory_size / block_size;
 
 	// Allocate 2GB memory
-	uint32_t *memory = static_cast<uint32_t*>(malloc(memory_size));
+	uint8_t *memory = static_cast<uint8_t*>(malloc(memory_size));
 
 	if (memory == NULL) {
 		printf("Memory allocation failed.\n");
 	}
 
-	// Initialize memory?
-	// memset(memory, 0, memory_size);
-
 	// Create an array to store block addresses
-	uint32_t **block_addresses = static_cast<uint32_t**>(malloc(num_blocks * sizeof(uint32_t*)));
+	void* block_addresses[num_blocks];
 
 	// Store each block address
-    for (size_t i = 0; i < num_blocks; i++) {
-        block_addresses[i] = memory + i * block_size;
+    for (int i = 0; i < num_blocks; i++) {
+		block_addresses[i] = reinterpret_cast<uint8_t*>(memory + (i * (block_size + 1)));
     }
 
 	// Initialize super block
-	struct SuperBlock sb;
+	struct SuperBlock* sb = reinterpret_cast<SuperBlock*>(block_addresses[0]);
 
 	// Initialize arrays to keep track of free data block and inode
-	sb.block_freelist = new bool[sb.nBlocks];
-	sb.inode_freelist = new bool[sb.nInodes];
+	sb->block_freelist = new bool[sb->nBlocks];
+	sb->inode_freelist = new bool[sb->nInodes];
 
 	// Mark first block to true
-	sb.block_freelist[0] = true;
+	sb->block_freelist[0] = true;
 
     // Marking all data bloks as free except the first block
-    for (int i = 1; i < sb.nBlocks; i++)
-        sb.block_freelist[i] = false; 
+    for (int i = 1; i < sb->nBlocks; i++)
+        sb->block_freelist[i] = false; 
 
     // Marking all inodes as free 
-    for (int i = 0; i < sb.nInodes; i++)
-        sb.inode_freelist[i] = false;
+    for (int i = 0; i < sb->nInodes; i++)
+        sb->inode_freelist[i] = false;
 
 
 	// Todo list
