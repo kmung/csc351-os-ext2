@@ -18,6 +18,7 @@ using namespace std;
 
 #define SERVER_PORT 8080
 #define MAX_BUFFER_SIZE 1024
+// code
 
 // clearing the shell using escape sequences
 #define clear() printf("\033[H\033[J")
