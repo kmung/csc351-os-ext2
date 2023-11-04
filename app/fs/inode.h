@@ -20,7 +20,7 @@ class Inode {
 		// file mode
 		mode_t i_mode;
 		// unique identifier
-		int i_id;
+		int i_num;
 		// number of hard links count
 		int i_nlink;
 		// 16 bits of Owner Uid
@@ -35,8 +35,9 @@ class Inode {
 		time_t i_mtime;
 		// creation time
 		time_t i_ctime;
-		// number of blocks occupied
-		int i_blocks;
+		// Include the index where file locates within data blocks
+		// If we are not making a huge file system, we can just use direct blocks
+		uint32_t DirectBlocks[12];
 
 	public:
 		// constructor
@@ -45,8 +46,8 @@ class Inode {
 		// set inode's atime, mtime, and ctime in that order
 		void setTimes(time_t atime, time_t mtime, time_t ctime);
 
-		// set inode's number of blocks
-		void setBlocks(int blocks);
+		// set inode's size
+		void setSize(int size);
 
 		// display inode's info
 		void displayInfo() const;
