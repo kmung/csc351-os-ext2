@@ -10,6 +10,8 @@ class shell {
     shell(int argc, char *argv[]);
     // destructor
     ~shell();
+
+    void init_shell();
 };
 
 

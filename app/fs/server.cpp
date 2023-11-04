@@ -32,7 +32,7 @@ int main() {
 
   // bind the socket to the address
   if (bind(server, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) {
-    cerr << "Error binding socket!" << endl;
+    cerr << "Error binding to client port!" << endl;
     return EXIT_FAILURE;
   }
 
@@ -52,17 +52,24 @@ int main() {
   }
 
   // receive data from the client
-  char buffer[MAX_BUFFER_SIZE] = {0};
-  recv(client, buffer, sizeof(buffer), 0);
-  cout << "From client: " << buffer << endl;
+  char buffer[MAX_BUFFER_SIZE];
+  
+  while (true) {
+    memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
+    if (recv(client, buffer, MAX_BUFFER_SIZE, 0) < 0) {
+      cerr << "Error receiving data from client!" << endl;
+      break;
+    }
 
-  // send a response to the client
-  const char* response = "Hello!";
-  send(client, response, strlen(response), 0);
+    // process the commands here and generate a response
+    if (send(client, buffer, strlen(buffer), 0) < 0) {
+      cerr << "Error sending data to client!" << endl;
+      break;
+    }
+  }
 
   // close the client socket
   close(client);
-
   // close the server socket
   close(server);
   

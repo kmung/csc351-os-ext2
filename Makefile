@@ -5,6 +5,9 @@ COFLAGS=-g -O2
 CWFLAGS=-Wall -Wextra
 CFLAGS=$(CWFLAGS) $(COFLAGS)
 
+# shell name
+TARGET ?= crash
+
 # source code directory
 SRC_DIR ?= ./app
 
