@@ -39,17 +39,6 @@ struct Inode {
 	// Address of direct blocks
 	// 10 direct blocks and 1 single indirect block
 	uint32_t i_blockPointers[11];
-	// constructor
-	Inode(mode_t mode, int id);
-
-	// set inode's atime, mtime, and ctime in that order
-	void setTimes(time_t atime, time_t mtime, time_t ctime);
-
-	// set inode's size
-	void setSize(int size);
-
-	// display inode's info
-	void displayInfo() const;
 };
 
 #endif

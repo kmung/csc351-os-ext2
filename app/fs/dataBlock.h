@@ -1,5 +1,5 @@
-#ifndef FS_H
-#define FS_H
+#ifndef DATABLOCK_H
+#define DATABLOCK_H
 
 class node {
     private:

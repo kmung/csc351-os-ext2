@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "fs.h"
+#include "disk.h"
 
 using namespace std;
 

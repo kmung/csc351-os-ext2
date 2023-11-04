@@ -1,5 +1,5 @@
-#ifndef FS_H
-#define FS_H
+#ifndef DISK_H
+#define DISK_H
 #include <string>
 #include <ctime>
 #include <sys/stat.h>
@@ -9,7 +9,7 @@
 
 #include "superblock.h"
 #include "inode.h"
-#include "mm.h"
+#include "dataBlock.h"
 #include "dentry.h"
 
 using namespace std;
