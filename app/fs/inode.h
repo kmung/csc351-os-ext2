@@ -15,42 +15,41 @@ using namespace std;
 #define FS_UNDEL_DIR_INO 6   // undelete directory inode
 
 // structure of inode
-class Inode {
-	private:
-		// file mode
-		mode_t i_mode;
-		// unique identifier
-		int i_num;
-		// number of hard links count
-		int i_nlink;
-		// 16 bits of Owner Uid
-		short i_uid;
-		// 16 bits of Group Id
-		short i_gid;
-		// size in bytes
-		int i_size;
-		// access time
-		time_t i_atime;
-		// modification time
-		time_t i_mtime;
-		// creation time
-		time_t i_ctime;
-		// Include the index where file locates within data blocks
-		// If we are not making a huge file system, we can just use direct blocks
-		uint32_t DirectBlocks[12];
+struct Inode {
+	// file mode
+	mode_t i_mode;
+	// unique identifier
+	int i_num;
+	// number of hard links count
+	int i_nlink;
+	// 16 bits of Owner Uid
+	short i_uid;
+	// 16 bits of Group Id
+	short i_gid;
+	// size in bytes
+	int i_size;
+	// number of blocks allocated
+	int i_nblocks;
+	// access time
+	time_t i_atime;
+	// modification time
+	time_t i_mtime;
+	// creation time
+	time_t i_ctime;
+	// Address of direct blocks
+	// 10 direct blocks and 1 single indirect block
+	uint32_t i_blockPointers[11];
+	// constructor
+	Inode(mode_t mode, int id);
 
-	public:
-		// constructor
-		Inode(mode_t mode, int id);
+	// set inode's atime, mtime, and ctime in that order
+	void setTimes(time_t atime, time_t mtime, time_t ctime);
 
-		// set inode's atime, mtime, and ctime in that order
-		void setTimes(time_t atime, time_t mtime, time_t ctime);
+	// set inode's size
+	void setSize(int size);
 
-		// set inode's size
-		void setSize(int size);
-
-		// display inode's info
-		void displayInfo() const;
+	// display inode's info
+	void displayInfo() const;
 };
 
 #endif

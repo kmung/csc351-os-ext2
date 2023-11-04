@@ -2,9 +2,17 @@
 #define DENTRY_H
 #include <sys/stat.h>
 #include <stdlib.h>
+// Define the maximum length of file name
 #define EXT2_NAME_LEN 256
 
-// Save iNode with file name
+// Define the type of file
+#define FILE_TYPE 0
+#define DIRECTORY_TYPE 1
+
+// Mark the file as symbolic link (soft link)
+#define SYMLINK_TYPE 2
+
+// Save iNode with file names
 // Save the entry to subdirectory if exists
 
 // Ex)
@@ -17,12 +25,14 @@
 // Direcotry Entries in /home/userA/file1.txt
 // Entry for "file1.txt": Inode Number 23456
 
-// Define max length of name
 
 struct dentry{
 	int inode;
-	size_t entrySize;
 	int ftype;	// ex) file or directory
+
+	// Size of this directory entry
+	short den_size;  
+
 	char fname[EXT2_NAME_LEN];
 };
 

@@ -14,11 +14,7 @@
 
 using namespace std;
 
-#define MEMORY_SIZE = 2ULL * 1024 * 1024 * 1024 * 8;
-#define BLOCK_SIZE = 4 * 1024 * 8;
-#define INODE_SIZE = 128 * 8;
-#define NINODES = 524288;
-#define ADDRESS_SIZE = 4;
+
 
 
 // Function to allocate memory to our disk partiton. 
