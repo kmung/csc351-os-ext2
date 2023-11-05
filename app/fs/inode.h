@@ -41,7 +41,7 @@ class Inode {
 
 	public:
 		// constructor
-		Inode(mode_t mode, int id);
+		Inode(mode_t mode=NULL, int id=NULL);
 
 		// set inode's atime, mtime, and ctime in that order
 		void setTimes(time_t atime, time_t mtime, time_t ctime);

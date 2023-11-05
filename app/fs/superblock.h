@@ -15,12 +15,10 @@ using namespace std;
 #define NINODES = 524288;
 #define ADDRESS_SIZE = 4;
 
-
-
 // Super block locates on the first block of the memory
 // It contains the entire information of file system
 // Although the size of superblock is 1KB, it still use the entire space of first block
-struct SuperBlock {
+struct Superblock {
 	// 2GB Memory Size
 	const uint32_t memory_size = 2ULL * 1024 * 1024 * 1024;
 
