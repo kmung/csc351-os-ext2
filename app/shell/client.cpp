@@ -17,7 +17,6 @@ using namespace std;
 #define MAX_BUFFER_SIZE 1024 // max buffer size for incoming data, server can receive up to 1024 bytes of data at a time from the client
 
  int main() {
-
   /*
   * TODO: need to get the IP address of the server.
   * For now, assume the client and server are on the same machine
