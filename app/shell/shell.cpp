@@ -1,14 +1,12 @@
 #include <stdio.h>
-#include <string.h>
-#include <malloc.h>
-#include <cstdio>
 #include <cstdlib>
+#include <cstdio>
+#include <string.h>
 #include <iostream>
 #include <cassert>
 #include <unistd.h>
-#include <syscall.h>
+#include <sys/socket.h>
 #include <errno.h>
-#include <string.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
 
