@@ -32,13 +32,15 @@ int main() {
 
   // bind the socket to the address
   if (bind(server, (struct sockaddr*)&serverAddress, sizeof(serverAddress)) < 0) {
-    cerr << "Error binding to client port!" << endl;
+    cerr << "Error!" << endl;
+    perror("Cannot bind to the client socket");
     return EXIT_FAILURE;
   }
 
   // listen for incoming connections
   if (listen(server, 5) < 0) {
-    cerr << "Error listening for connections" << endl;
+    cerr << "Error!" << endl;
+    perror("Error listening for incoming connections!");
     return EXIT_FAILURE;
   }
 

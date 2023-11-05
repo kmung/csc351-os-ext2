@@ -1,6 +1,4 @@
 #include <stdio.h>
-#include <string.h>
-#include <malloc.h>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -28,9 +26,6 @@ void init_shell() {
   printf("\n\n\n\n\t********************************************");
   printf("\n\n\t*****The Creative Awesome Shell - Crash*****");
   printf("\n\n\t********************************************\n\n");
-
-  sleep(1);
-  //clear();
 }
 
   /*
@@ -66,7 +61,7 @@ void init_shell() {
     //cout << buffer << endl;
 
     // do something with user input
-    if (input == "exit") {
+    if (buffer == "exit") {
       break;
     }
 
