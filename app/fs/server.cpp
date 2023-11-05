@@ -63,6 +63,11 @@ int main() {
       break;
     }
 
+    if (string(buffer) == "shutdown") {
+      cout << "Client has quit the session" << endl;
+      break;
+    }
+
     // process the commands here and generate a response
     if (send(client, buffer, strlen(buffer), 0) < 0) {
       cerr << "Error sending data to client!" << endl;

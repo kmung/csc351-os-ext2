@@ -37,6 +37,9 @@ void init_shell() {
   string input;
 
   while (true) {
+    // cout << "breaking" <<endl;
+    // break;
+
     // get the current working directory
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
       cout << cwd << "-> "; // prompt the user with current working directory and -> to indicate that the user can enter a command
@@ -58,7 +61,7 @@ void init_shell() {
       break;
     }
 
-    //cout << buffer << endl;
+    cout << buffer << endl;
 
     // do something with user input
     if (buffer == "exit") {
