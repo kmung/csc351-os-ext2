@@ -14,11 +14,7 @@
 
 using namespace std;
 
-
-
-
 // Function to allocate memory to our disk partiton. 
-int create_disk();
-
+int createDisk(const string& devicePath);
 
 #endif
