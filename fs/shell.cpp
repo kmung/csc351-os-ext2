@@ -55,8 +55,18 @@ void init_shell() {
     // get user input
     cin.getline(buffer, MAX_BUFFER_SIZE);
 
+
+    // close the shell when user enters exit
+    if (string(buffer) == "exit") {
+      break;
+    }
+
     if (send(sock, buffer, strlen(buffer), 0) < 0) {
       cerr << "Error sending data to server!" << endl;
+      break;
+    }
+
+    if (string(buffer) == "shutdown") {
       break;
     }
 
@@ -66,12 +76,7 @@ void init_shell() {
       break;
     }
 
-    // cout << buffer << endl;
-
-    // // do something with user input
-    // if (buffer == "exit") {
-    //   break;
-    // }
+    cout << buffer << endl;
 
   }
  }
@@ -81,6 +86,7 @@ int main(int argc, char **argv) {
   // call the shell greeting
   init_shell();
 
+  // sock is client
  int sock = socket(AF_INET, SOCK_STREAM, 0);
  if (sock < 0) {
    cerr << "Error: Cannot create client socket." << endl;

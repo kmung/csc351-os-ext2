@@ -3,7 +3,17 @@
       {
           "name": "ls",
           "description": "List directory contents",
-          "syntax": "ls"
+          "syntax": {
+                "command": "ls",
+                "args": [
+                        {
+                            "name": "directory",
+                            "description": "The directory to list",
+                            "type": "path",
+                            "required": false
+                        }
+                ]
+          }
       },
       {
           "name": "cd",
@@ -15,7 +25,7 @@
                         "name": "directory",
                         "description": "The directory to change to",
                         "type": "path",
-                        "required": true
+                        "required": false
                     }
               ]
           }
@@ -82,14 +92,6 @@
           "description": "Shutdown the system",
           "syntax": {
                 "command": "shutdown",
-                "args": []
-          }
-      },
-      {
-          "name": "exit",
-          "description": "Exit the shell",
-          "syntax": {
-                "command": "exit",
                 "args": []
           }
       }
