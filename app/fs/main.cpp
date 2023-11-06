@@ -19,7 +19,10 @@ int main(int argc, char **argv) {
     // Specify the device path
     string devicePath = "C:/Users/ssyak/OneDrive/Desktop/class/2023fall/CSC351/disk.vhd";
 
+    // Create a filesystem object
     createDisk(devicePath);
+
+
 
     return 0;
 }

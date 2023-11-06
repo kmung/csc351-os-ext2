@@ -50,45 +50,52 @@ int createDisk(const string& devicePath){
         disk.write(block, block_size);
     }
 
-    // Check for write errors
-    if (!disk) {
-        std::cerr << "Error: Could not write to file at " << devicePath << '\n';
-        rc = -1;
-    } else {
-        rc = 0;
-    }
+    // // Check for write errors
+    // if (!disk) {
+    //     std::cerr << "Error: Could not write to file at " << devicePath << '\n';
+    //     rc = -1;
+    // } else {
+    //     rc = 0;
+    // }
 
 	
-	// Mark first block to be used by superblock
-	sb->block_freelist[0] = true;
+	// // Mark first block to be used by superblock
+	// sb->block_freelist[0] = true;
 
-	// Write the superblock to the file
-	disk.seekp(0);
-	disk.write(reinterpret_cast<char*>(sb), sizeof(*sb));
+	// // Write the superblock to the file
+	// disk.seekp(0);
+	// disk.write(reinterpret_cast<char*>(sb), sizeof(*sb));
 
-	// Find a free inode for the root directory
-	int rootInodeIndex = 1;
+	// // Find a free inode for the root directory
+	// int rootInodeIndex = 1;
 
-	// Initialize the root directory inode
-	Inode rootInode;
+	// // Initialize the root directory inode
+	// Inode rootInode;
 
-	// Set the root directory inode's mode to read, write, and execute for all
-	rootInode.mode = 0777;
+	// // Set the root directory inode's mode to read, write, and execute for all
+	// rootInode.mode = 0777;
 
-	// Write the root inode to the file
-	disk.seekp(rootInodeIndex * block_size);
-	disk.write(reinterpret_cast<char*>(&rootInode), sizeof(rootInode));
+	// // Write the root inode to the file
+	// disk.seekp(rootInodeIndex * block_size);
+	// disk.write(reinterpret_cast<char*>(&rootInode), sizeof(rootInode));
 
-	// Initialize the root directory entry
-	dentry rootDentry;
-	rootDentry.inode = rootInodeIndex;
-	strcpy(rootDentry.fname, "/");
+	// // Initialize the root directory entry
+	// dentry rootDentry;
+	// rootDentry.inode = rootInodeIndex;
+	// strcpy(rootDentry.fname, "/");
 
-	// Write the root directory entry to the file
-	disk.seekp((rootInodeIndex + 1) * block_size);
-	disk.write(reinterpret_cast<char*>(&rootDentry), sizeof(rootDentry));
+	// // Write the root directory entry to the file
+	// disk.seekp((rootInodeIndex + 1) * block_size);
+	// disk.write(reinterpret_cast<char*>(&rootDentry), sizeof(rootDentry));
 
 	disk.close();
 
 	return rc;
+}
+
+void closeDisk(ifstream& diskFile){
+    // Close the file
+    if (diskFile.is_open()) {
+        diskFile.close();
+    }
 }

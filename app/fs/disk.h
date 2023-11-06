@@ -18,4 +18,5 @@ void openDisk(const string& devicePath, fstream& diskFile);
 // Function to allocate memory to our disk partiton. 
 int createDisk(const string& devicePath);
 
+void closeDisk(ifstream& diskFile);
 #endif

@@ -28,10 +28,6 @@
 
 struct dentry{
 	int inode;
-	int ftype;	// ex) file or directory
-
-	// Size of this directory entry
-	short den_size;  
 
 	char fname[EXT2_NAME_LEN];
 };
