@@ -1,5 +1,5 @@
 # CSC351 ext2 based Operating System simulation.
-The app is composed of the filesystem and the shell to accompany the filesystem.
+The fs is composed of the filesystem and the shell to accompany the filesystem.
 
 ## File System Overview
 The File System (FS) shall be sized at 2GB of raw storage, and shall be implemented within a file on the computer.
