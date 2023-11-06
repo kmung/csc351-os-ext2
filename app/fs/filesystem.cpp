@@ -1,5 +1,12 @@
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
-#include <fstream>
+#include <cstring>
+#include <stdexcept> 
+#include <string> 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "filesystem.h"
 #include "disk.h"
@@ -7,116 +14,158 @@
 
 using namespace std;
 
-//******************************************************************************
-FileSystem::FileSystem(const string& devicePath) : devicePath(devicePath), isMounted(false) {
-    mount();
+fs::fs() {
+
 }
 
 //******************************************************************************
-bool FileSystem::mount() {
-    // Open the disk file
-    diskFile.open(devicePath, ios::binary | ios::in | ios::out);
 
-    if (!diskFile.is_open()) {
-        cerr << "Error: Could not open disk at " << devicePath << '\n';
-        return false;
+fs::~fs() {
+
+}
+
+//******************************************************************************
+int fs::my_read(int fd, char* buffer, int nbytes) {
+    int bytesRead;
+    try {
+        bytesRead = read(fd, buffer, nbytes);
+        if (bytesRead == -1) {
+            throw exception();
+        }
+    } catch (...) {
+        bytesRead = 0;
     }
 
-    // Initialize the disk
-    if (!createDisk(devicePath)) {
-        cerr << "Error: Could not initialize disk at " << devicePath << '\n';
-        return false;
-    }
-
-    // The file system is now mounted
-    isMounted = true;
-
-    return true;
+    return bytesRead;
 }
 
 //******************************************************************************
-bool FileSystem::unmount() {
 
-    if (isMounted) {
-        diskFile.close();
-        isMounted = false;
+int fs::my_write(int fd, const char* buffer, int nbytes) {
+    // Use the write function with the file descriptor to write data.
+    int bytesWritten;
+    try{
+        bytesWritten = write(fd, buffer, nbytes);
+        if (bytesWritten == -1) {
+            throw exception();
+        }
+    } catch (...) {
+        bytesWritten = 0;
     }
 
-    return isMounted;
-}
-//******************************************************************************
-bool FileSystem::allocateInode(int &inodeNumber) {
-    SuperBlock SuperBlock = readSuperBlock();
-
-    // Read the inode bitmap block from disk
-    char inodeBitmap[SuperBlock.getInodeBitmapBlockCount() * SuperBlock.getBlockSize()];
-    readBlock(SuperBlock.getInodeBitmapBlock(), inodeBitmap);
+    return bytesWritten;
 }
 
 //******************************************************************************
-bool FileSystem::createFile(const std::string& filename, int fileSize) {
-    bool rc = false;
-    if (!isMounted) {
-        // File system is not mounted, return false or throw an exception
-        cerr << "Cannot create a file. The file system is not mounted." << endl;
-        return false;
+
+int fs::my_creat(const string& name, int mode) {
+    int fd;
+    try{
+        fd = creat(name.c_str(), mode);
+        if (fd == -1) {
+            throw exception();
+        }
+    } catch (...) {
+        fd = 0;
     }
-
-    // Step 1: Allocate an available inode
-    int newInodeNumber;
-    allocateInode(newInodeNumber);
-
-    // Step 2: Create a new Inode for the file
-    Inode newInode;
-    newInode.setSize(fileSize);  // Set the file size
-    // Set permissions, timestamps, and other inode properties as needed
-
-    // Step 3: Reserve data blocks for the file content
-    vector<unsigned int> dataBlockNumbers = allocateDataBlocks(fileSize);
-
-    // Step 4: Update the new Inode with data block pointers
-    newInode.setDataBlockPointers(dataBlockNumbers);
-
-    // Step 5: Update the directory entry for the new file
-    // This involves adding a new DirectoryEntry in the parent directory
-    if (addDirectoryEntry(filename, newInodeNumber)) {
-        // Step 6: Update the SuperBlock and inode table to reflect changes
-
-        // Step 7: Write the new Inode and data blocks to disk
-
-        rc = true; // File creation was successful
-    }
-
-    // If any step fails, you should handle error conditions and cleanup as needed.
-    // This includes deallocating any allocated resources in case of failure.
-
-    return false; // File creation failed
+    
+    return fd;
 }
+
 //******************************************************************************
-// TO BE IN SuperBlock
-SuperBlock readSuperBlock(const string& devicePath) {
-    SuperBlock SuperBlock;
 
-    // The SuperBlock is the first block in the file system
-    unsigned int SuperBlockBlockNumber = 0;
+int fs::my_Iseek(int fd, off_t offset, int when) {
+    // Use the lseek function with the file descriptor to seek.
+    off_t result = lseek(fd, offset, when);
+    int rc = 0;
+    if (result == -1) {
+        // Handle the error, e.g., print an error message.
+        std::cerr << "Seek failed" << std::endl;
+        rc = -1;
+    }
 
-    // Read the SuperBlock data from the specified block
-    readBlock(devicePath, SuperBlockBlockNumber, &SuperBlock, sizeof(SuperBlock));
-
-    // Perform validation and error handling here if necessary
-
-    return SuperBlock;
+    return rc; 
 }
 
-SuperBlock getInodeBitmapBlockCount() {
-    return inodeCount;
+//******************************************************************************
+
+int my_fstat(int fd, struct stat* buf) {
+    // Call the fstat system call to retrieve file status information.
+    int rc = 0;
+    if (fstat(fd, buf) == -1) {
+        // If fstat returns -1, an error occurred.
+        std::cerr << "Error: Failed to retrieve file status." << std::endl;
+        rc = -1; 
+    }
+
+    // Successfully retrieved file status information.
+    return rc; 
 }
 
-SuperBlock getBlockSize() {
-    return blockSize;
+
+//******************************************************************************
+
+int fs::my_open(const char *pathname, mode_t mode) {
+    //try opening the file first
+    int fd = open(pathname, mode);
+
+    if (fd == -1) {
+		//using the c library, we can error handle and see if the most recent
+		//function call occured an error and is set to defined numerical value
+		//recognized by the OS  to show that the file doesn't exist
+		if (errno == ENOENT) { 
+			fd = 0;
+			cout << "ERROR! File does not exist!" << endl;
+		} else { //another possible error
+			cout << "Cannot open file!" << endl;
+		}
+    } else {
+		//open call was successful
+		cout << "File," << pathname << "is open with descriptor" << fd << "." << endl;
+	}
+
+	return fd;
 }
 
-SuperBlock getInodeBitmapBlock() {
-    return inodeBlockNum
+//******************************************************************************
+
+int fs::my_close(int fd) {
+	int errC;
+	//check if file descriptor is valid since it can only be 0,1 or 2
+	if (fd < 0) {
+		cout << "Invalid file descriptor!" << endl;
+	} else {
+		errC = close(fd);
+		if (errC == -1) {
+		//using the c library, we can error handle and see if the most recent
+		//function call occured an error and is set to defined numerical value
+		//recognized by the OS  to show that the file doesn't exist
+			if (errno == ENOENT) { 
+				cout << "ERROR! File does not exist!" << endl;
+			} else { //another possible error
+				cout << "Cannot close file!" << endl;
+			}
+    	} else {
+			cout << "File closed successfully!" << endl;
+			errC = 0;
+		}
+	}
+
+	return errC;
+}
+
+//******************************************************************************
+
+int fs::my_stat(const string& name, struct stat& buf) {
+    // Call the stat system call to retrieve file status information for the specified path.
+    int rc = 0;
+    if (stat(name.c_str(), &buf) == -1) {
+        // If stat returns -1, an error occurred.
+        std::cerr << "Error: Failed to retrieve file status for '" << name << "'" << std::endl;
+        rc = -1; 
+    }
+
+    // Successfully retrieved file status information.
+    return rc; 
 }
 

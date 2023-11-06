@@ -14,30 +14,26 @@
 
 using namespace std;
 
-class FileSystem {
-    private:
-        string devicePath;
-        bool isMounted;
-        fstream diskFile;
+//******************************************************************************
+// ext2 based fs
+class fs {
+	public:
+		fs();
+		~fs();
 
-        //  responsible for finding and reserving an available inode for the new file
-        bool allocateInode(int &inodeNumber);
+		// refer to https://man7.org/linux/man-pages/man2/syscalls.2.html for more
+		
+		int my_read(int fd, char* buffer, int nbytes);
+		int my_write(int fd, const char* buffer, int nbytes);
+		int my_creat(const string& name, int mode);
+		int my_Iseek(int fd, off_t offset, int when);
+		int my_fstat(int fd, struct stat* buf);
+		int my_open(const char *pathname, mode_t mode);
+		int my_close(int fd);
+		int my_stat(const string& name, struct stat& buf);
 
-    public:
-        FileSystem(const string &devicePath);
+		int fd;
 
-        bool mount();
-        bool unmount();
 
-        bool createFile(const string &filename, int fileSize);
-        bool deleteFile(const string &path);
-        int openFile(const string &path, const string &mode);
-        bool closeFile(int fileDescriptor);
-        ssize_t readFile(int fileDescriptor, char* buffer, size_t size);
-        ssize_t writeFile(int fileDescriptor, const char* buffer, size_t size);
-        bool seekFile(int fileDescriptor, size_t position);
-        vector<string> listDirectory(const string& path);
-        bool changeDirectory(const string& path);
 };
-
 #endif
