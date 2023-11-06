@@ -12,8 +12,6 @@
 #include <fstream>
 #include <sstream>
 
-#include "shell.h"
-
 using namespace std;
 
 #define SERVER_PORT 8080
