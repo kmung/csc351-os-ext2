@@ -36,17 +36,8 @@ using namespace std;
 // Super block locates on the first block of the memory
 // It contains the entire information of file system
 // Although the size of superblock is 1KB, it still use the entire space of first block
-class SuperBlock {
-	public:
-		SuperBlock(uint64_t memorySize, uint64_t blockSize)
-        : memory_size(memorySize), block_size(blockSize),
-          nBlocks(memorySize / blockSize),
-          nInodes(blockSize * NINODE_BLOCKS / INODE_SIZE),
-          inode_freelist(NINODES, false),
-          block_freelist(memorySize / blockSize, false) {
-        // Mark first block to be used by superblock
-        block_freelist[0] = true;
-    }
+struct SuperBlock {
+
 		uint64_t memory_size = MEMORY_SIZE;
 		uint64_t block_size = BLOCK_SIZE;
 		uint64_t nBlocks = MEMORY_SIZE / BLOCK_SIZE;
@@ -57,8 +48,8 @@ class SuperBlock {
 
 		// List to keep track of free inode and datablock
 		// If data exists in block, return true. Otherwise return false
-		std::vector<bool> inode_freelist;
-    	std::vector<bool> block_freelist;
+		// vector<bool> inode_freelist;
+    	// vector<bool> block_freelist;
 };
 
 

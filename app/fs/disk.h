@@ -19,4 +19,10 @@ void openDisk(const string& devicePath, fstream& diskFile);
 int createDisk(const string& devicePath);
 
 void closeDisk(ifstream& diskFile);
+
+void readBlock(fstream& disk, int blockNumber, char* data, int blockSize);
+
+void readSuperBlock(fstream& disk, SuperBlock& sb);
+
+SuperBlock initSuperBlock(fstream& disk);
 #endif
