@@ -9,44 +9,36 @@
 
 using namespace std;
 
-#define MEMORY_SIZE = 2ULL * 1024 * 1024 * 1024 * 8;
-#define BLOCK_SIZE = 4 * 1024 * 8;
-#define INODE_SIZE = 128 * 8;
-#define NINODES = 524288;
-#define ADDRESS_SIZE = 4;
+// 2GB memory size
+#define MEMORY_SIZE 2ULL * 1024 * 1024 * 1024
+// 4KB block size
+#define BLOCK_SIZE 4 * 1024
+// 128B inode size
+#define INODE_SIZE 128
+// Total number of inode blocks
+#define NINODE_BLOCKS 1024
+// Total number of inodes
+#define NINODES 1024 * 32
 
-// Super block locates on the first block of the memory
-// It contains the entire information of file system
-// Although the size of superblock is 1KB, it still use the entire space of first block
-struct Superblock {
-	// 2GB Memory Size
-	const uint32_t memory_size = 2ULL * 1024 * 1024 * 1024;
+class Superblock {
+	private:
+		uint64_t memorySize = MEMORY_SIZE;
+		uint64_t blockSize = BLOCK_SIZE;
+		uint64_t nBlocks = MEMORY_SIZE / BLOCK_SIZE;
+		uint64_t inodeSize = INODE_SIZE;
+		uint64_t nInodeBlocks = NINODE_BLOCKS;
+		uint64_t nInodes = BLOCK_SIZE * NINODE_BLOCKS / INODE_SIZE;
+		uint64_t firstDataBlock = NINODE_BLOCKS + 1;
+		uint64_t firstFreeInode = 11;
 
-	// 4KB block size
-	const size_t block_size = 4 * 1024;
-
-	// Total number of disk blocks
-	const int nBlocks = memory_size / block_size;
-
-	// Number of Inode blocks, we should decide it
-	// I put half of nblocks for now
-	const int nInodes = 524288;
-
-	// Size of inode strcuture
-	const size_t inode_size = 128;
-
-	
-
-
-	// List to keep track of free inode and datablock
-	// If data exists in block, return true. Otherwise return false
-	bool* inode_freelist;
-    bool* block_freelist; 
+		// List to keep track of free inode blocks and free data blocks
+		// Return true if block is free. Otherwise return false.
+		bool *inodeFreeList;
+		bool *blockFreeList; 
+	public:
+		Superblock();
+		bool allocateInode(int &inodeNum);
 };
-
-
-// Function to allocate memory to our disk partiton. 
-int create_disk();
 
 
 #endif

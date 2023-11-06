@@ -18,30 +18,32 @@ using namespace std;
 class Inode {
 	private:
 		// file mode
-		mode_t i_mode;
+		mode_t mode;
 		// unique identifier
-		int i_num;
+		int index;
 		// number of hard links count
-		int i_nlink;
+		int nlink;
 		// 16 bits of Owner Uid
-		short i_uid;
+		short uid;
 		// 16 bits of Group Id
-		short i_gid;
+		short gid;
 		// size in bytes
-		int i_size;
+		int size;
+		// number of blocks allocated
+		int nblocks;
 		// access time
-		time_t i_atime;
+		time_t atime;
 		// modification time
-		time_t i_mtime;
+		time_t mtime;
 		// creation time
-		time_t i_ctime;
+		time_t ctime;
 		// Include the index where file locates within data blocks
 		// If we are not making a huge file system, we can just use direct blocks
-		uint32_t DirectBlocks[12];
+		uint32_t blockPointers[11];
 
 	public:
 		// constructor
-		Inode(mode_t mode=NULL, int id=NULL);
+		Inode(int index=NULL);
 
 		// set inode's atime, mtime, and ctime in that order
 		void setTimes(time_t atime, time_t mtime, time_t ctime);

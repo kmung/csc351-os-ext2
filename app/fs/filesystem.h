@@ -15,10 +15,8 @@ using namespace std;
 class FileSystem {
     private:
         string devicePath;
+        Superblock *superblock;
         bool isMounted;
-
-        //  responsible for finding and reserving an available inode for the new file
-        bool allocateInode(int &inodeNumber);
 
     public:
         FileSystem(const string &devicePath);
@@ -27,14 +25,13 @@ class FileSystem {
         bool unmount();
 
         bool createFile(const string &filename, int fileSize);
-        bool deleteFile(const string &path);
         int openFile(const string &path, const string &mode);
         bool closeFile(int fileDescriptor);
-        ssize_t readFile(int fileDescriptor, char* buffer, size_t size);
-        ssize_t writeFile(int fileDescriptor, const char* buffer, size_t size);
+        ssize_t readFile(int fileDescriptor, char *buffer, size_t size);
+        ssize_t writeFile(int fileDescriptor, const char *buffer, size_t size);
         bool seekFile(int fileDescriptor, size_t position);
-        vector<string> listDirectory(const string& path);
-        bool changeDirectory(const string& path);
+        vector<string> listDirectory(const string &path);
+        bool changeDirectory(const string &path);
 };
 
 #endif
