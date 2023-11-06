@@ -1,19 +1,32 @@
 CC=g++
-YACC=bison
-LEX=flex
 COFLAGS=-g -O2
 CWFLAGS=-Wall -Wextra
 CFLAGS=$(CWFLAGS) $(COFLAGS)
 
-# source code directory
-SRC_DIR ?= ./app
+# shell name
+TARGET ?= crash
 
-all: app
+# source code directory
+SRC_DIR ?= ./fs
+
+# source files
+SRCS = $(wildcard $(SRC_DIR)/*.cpp)
+
+# objs
+OBJS = $(SRCS:.cpp=.o)
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
+
+%.o: %.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
 
 .PHONY:	clean distclean
 
 clean:
-	-rm -f *.o lex.yy.c
+	-rm -f $(SRC_DIR)/*.o
 
 distclean:
-	-rm -f *.o client server lex.yy.c
+	-rm -f $(SRC_DIR)/*.o $(TARGET)
