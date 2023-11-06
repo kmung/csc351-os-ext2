@@ -12,6 +12,16 @@ using namespace std;
 
 #include "fs.h"
 
+fs::fs() {
+
+}
+
+//******************************************************************************
+
+fs::~fs() {
+
+}
+
 //******************************************************************************
 
 int fs::my_read(int fd, char* buffer, int nbytes) {
@@ -20,7 +30,6 @@ int fs::my_read(int fd, char* buffer, int nbytes) {
     if (bytesRead == -1) {
         // Handle the error, e.g., print an error message.
         std::cerr << "Error while reading from file descriptor." << std::endl;
-        bytesRead = -1;
     }
 
     return bytesRead;
@@ -35,7 +44,6 @@ int fs::my_write(int fd, const char* buffer, int nbytes) {
     if (bytesWritten == -1) {
         // Handle the error, e.g., print an error message.
         std::cerr << "Error while writing to file descriptor." << std::endl;
-        bytesWritten = -1;
     }
 
     return bytesWritten;
