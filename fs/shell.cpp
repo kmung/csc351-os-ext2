@@ -10,7 +10,7 @@
 #include <sys/types.h>
 #include <arpa/inet.h>
 #include <fstream>
-#include "libraries/json.hpp"
+#include <sstream>
 
 #include "shell.h"
 
@@ -20,14 +20,16 @@ using namespace std;
 #define MAX_BUFFER_SIZE 1024
 
 // clearing the shell using escape sequences
-#define clear() printf("\033[H\033[J")
+void clearShell() {
+  cout << "\033[H\033[J";
+}
 
 // shell greeting during start up
 void init_shell() {
-  clear();
-  printf("\n\n\n\n\t********************************************");
-  printf("\n\n\t*****The Creative Awesome Shell - Crash*****");
-  printf("\n\n\t********************************************\n\n");
+  clearShell();
+  cout << "\n\n\n\n\t********************************************" << endl;
+  cout << "\n\n\t*****The Creative Awesome Shell - Crash*****" << endl;
+  cout << "\n\n\t********************************************\n\n" << endl;
 }
 
   /*
@@ -36,7 +38,7 @@ void init_shell() {
  void repl(int sock) {
   char buffer[MAX_BUFFER_SIZE];
   char cwd[MAX_BUFFER_SIZE]; // to store the current working directory
-  string input;
+  //string input;
 
   while (true) {
     // cout << "breaking" <<endl;
@@ -58,7 +60,7 @@ void init_shell() {
       break;
     }
 
-    memset(buffer, 0, MAX_BUFFER_SIZE);
+    memset(buffer, 0, MAX_BUFFER_SIZE); // 
     if (recv(sock, buffer, MAX_BUFFER_SIZE, 0) < 0) {
       cerr << "Error receiving data from server!" << endl;
       break;

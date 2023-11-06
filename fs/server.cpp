@@ -2,18 +2,36 @@
 // the fs is the server side
 #include <iostream>
 #include <stdlib.h>
+#include <stdio.h>
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <unistd.h>
+#include <syscall.h>
 #include <arpa/inet.h> //The arpa/inet.h header file contains definitions for internet operations, from IBM
 #include <sys/socket.h> //The sys/socket.h header file contains sockets definitions. from IBM
+#include "libraries/json.hpp"
+#include <fstream>
+#include <sstream>
 
 using namespace std;
+using json = nlohmann::json;
 
 // define port number to listen to
 #define PORT 8080 // port 8080 is common application web server port
 #define MAX_BUFFER_SIZE 1024 // max buffer size for incoming data, server can receive up to 1024 bytes of data at a time from the client
+
+// function to load commands from commands.json
+nlohmann::json loadCommands() {
+  ifstream commandsFile("commands.json");
+  nlohmann::json commandsJson;
+  commandsFile >> commandsJson;
+  return commandsJson;
+}
+
+// call the commands
+// nlohmann::json commands = loadCommands();
+
 
 int main() {
 
@@ -69,10 +87,7 @@ int main() {
     }
 
     // process the commands here and generate a response
-    if (send(client, buffer, strlen(buffer), 0) < 0) {
-      cerr << "Error sending data to client!" << endl;
-      break;
-    }
+    
   }
 
   // close the client socket
