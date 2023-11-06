@@ -6,8 +6,14 @@
 #include <cstdio>
 #include <cstring>
 #include <unistd.h>
+
+#ifndef _WIN32
 #include <arpa/inet.h> //The arpa/inet.h header file contains definitions for internet operations, from IBM
 #include <sys/socket.h> //The sys/socket.h header file contains sockets definitions. from IBM
+#else
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#endif
 
 using namespace std;
 

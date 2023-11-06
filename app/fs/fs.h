@@ -10,7 +10,7 @@
 #include "inode.h"
 
 // FS date
-#define FS_DATE "10/24/2023
+#define FS_DATE "10/24/2023"
 
 using namespace std;
 

@@ -1,0 +1,3 @@
+C:/Users/cjlyn/CLionProjects/csc351-os-ext2/cmake-build-debug/CMakeFiles/csc351_os_ext2.dir
+C:/Users/cjlyn/CLionProjects/csc351-os-ext2/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/cjlyn/CLionProjects/csc351-os-ext2/cmake-build-debug/CMakeFiles/rebuild_cache.dir

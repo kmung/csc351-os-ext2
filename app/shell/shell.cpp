@@ -1,16 +1,22 @@
 #include <stdio.h>
-#include <string.h>
-#include <malloc.h>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
 #include <cassert>
-#include <unistd.h>
-#include <syscall.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#include <arpa/inet.h>
+
+
+#ifdef _WIN32
+#include <winsock2.h>
+#else
+#include <arpa/inet.h> //The arpa/inet.h header file contains definitions for internet operations, from IBM
+#include <sys/socket.h> //The sys/socket.h header file contains sockets definitions. from IBM
+#endif
+// #else
+// #include <ws2tcpip.h>
+// #endif
 
 #include "shell.h"
 
@@ -28,9 +34,11 @@ void init_shell() {
   printf("\n\n\n\n*******************");
   printf("\n\n\t*****The Shell*****");
   printf("\n\n\n\n*******************");
-
-  sleep(1);
   clear();
+}
+
+char* getcwd(char *buf, size_t size){
+    return "filesytem_test/testing/user";
 }
 
 int main(int argc, char **argv) {
@@ -63,6 +71,7 @@ int main(int argc, char **argv) {
   char buffer[MAX_BUFFER_SIZE];
   char cwd[MAX_BUFFER_SIZE];
 
+
   while (true) {
     // get the current working directory
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
@@ -88,7 +97,6 @@ int main(int argc, char **argv) {
     cout << buffer << endl;
   }
 
-  close(sock);
- 
+  // close(sock);
   return 0;
 }

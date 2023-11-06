@@ -1,0 +1,10 @@
+# ninja log v5
+1	179	7208469137876790	build.ninja	72c6e475b19fdb16
+284	394	7208450846858252	csc351_os_ext2.exe	d895cb80d1629c7a
+16	1088	7208459412439893	CMakeFiles/csc351_os_ext2.dir/app/shell/shell.cpp.obj	99938ee424a6658b
+0	282	7208450845763183	CMakeFiles/csc351_os_ext2.dir/main.cpp.obj	70dff2d1085d851c
+0	434	7208454384052254	CMakeFiles/csc351_os_ext2.dir/app/fs/bitmap.cpp.obj	99c688b5c7eb9b56
+32	130	7208454381016651	CMakeFiles/csc351_os_ext2.dir/app/shell/tmp/copyfile.cpp.obj	6b0b58c3dc785bc8
+27	360	7208454383317162	CMakeFiles/csc351_os_ext2.dir/app/fs/inode.cpp.obj	1f385786791349ca
+18	1184	7208459135766365	CMakeFiles/csc351_os_ext2.dir/app/fs/server.cpp.obj	3e9ff9a7c3443218
+13	1135	7208460651220890	CMakeFiles/csc351_os_ext2.dir/app/shell/client.cpp.obj	5ead15ac58e54a28
