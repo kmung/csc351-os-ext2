@@ -14,20 +14,35 @@ FileSystem::FileSystem(const string& devicePath) : devicePath(devicePath), isMou
 
 //******************************************************************************
 bool FileSystem::mount() {
-    // Implement file system mounting logic
+    // Open the disk file
+    diskFile.open(devicePath, ios::binary | ios::in | ios::out);
+
+    if (!diskFile.is_open()) {
+        cerr << "Error: Could not open disk at " << devicePath << '\n';
+        return false;
+    }
+
+    // Initialize the disk
+    if (!createDisk(devicePath)) {
+        cerr << "Error: Could not initialize disk at " << devicePath << '\n';
+        return false;
+    }
+
+    // The file system is now mounted
     isMounted = true;
 
-    // Initialize other data members
-    createDisk(devicePath);
-    
     return true;
 }
 
 //******************************************************************************
 bool FileSystem::unmount() {
-    // Implement file system unmounting logic
-    isMounted = false;
-    return true;
+
+    if (isMounted) {
+        diskFile.close();
+        isMounted = false;
+    }
+
+    return isMounted;
 }
 //******************************************************************************
 bool FileSystem::allocateInode(int &inodeNumber) {
