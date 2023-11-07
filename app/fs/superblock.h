@@ -20,6 +20,8 @@ using namespace std;
 #define NINODE_BLOCKS 1024
 // Total number of inodes
 #define NINODES 1024 * 32
+// First data block
+#define FIRST_DATA_BLOCK 1025
 
 
 // If each inode can address 1034 blocks (10 direct and 1 single indirect pointer which can address 1024 blocks), and you have 32768 inodes,

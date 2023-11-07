@@ -22,25 +22,27 @@ int main(int argc, char **argv) {
     // Create a filesystem object
     createDisk(devicePath);
 
-    fstream disk;
-    openDisk(devicePath, disk);
+    std::fstream disk(devicePath, std::ios::in | std::ios::out | std::ios::binary);
+    if (!disk) {
+        std::cerr << "Failed to open device: " << devicePath << std::endl;
+    }
 
     SuperBlock sb;
-    char buffer[sizeof(sb)];
-    readBlock(disk, 0, buffer, sizeof(sb)); // Read into the buffer
+    readSuperBlock(disk, sb);
 
-    memcpy(&sb, buffer, sizeof(sb)); // Copy the data from the buffer to the SuperBlock object
+    Inode inode;
+    readInode(disk, 0, inode);
 
-    cout << sb.block_size << endl; // Access the member directly, not through a pointer
+    std::vector<dentry> entries;
+    readDentry(disk, entries);
 
+    // // Print the dentries
+    // for (const auto& dentry : entries) {
+    //     std::cout << "Filename: " << dentry.fname << std::endl;
+    //     std::cout << "Inode: " << dentry.inode << std::endl;
+    // }
 
-    disk.seekg(sb.first_data_block * sb.block_size); // Seek to the position of the directory entry
-
-    dentry dir;
-    disk.read(reinterpret_cast<char*>(&dir), sizeof(dir)); // Read the directory entry
-    cout << dir.inode << endl;
-
-    disk.close();
+    closeDisk(disk);
 
     return 0;
 }

@@ -14,14 +14,18 @@
 
 using namespace std;
 
+//******************************************************************************
 void openDisk(const string& devicePath, fstream& diskFile){
 	// Open the file
     diskFile.open(devicePath, ios::binary | ios::out);
     if (!diskFile.is_open()) {
         cerr << "Error: Could not open file at " << devicePath << '\n';
-    }
+    } else {
+		cout << "Opened file at " << devicePath << '\n';
+	}
 }
 
+//******************************************************************************
 int createDisk(const string& devicePath){
 	int rc = -1;
 
@@ -34,18 +38,12 @@ int createDisk(const string& devicePath){
 	// Calculate the number of blocks
 	size_t num_blocks = memory_size / block_size;
 
-
-
     // Open the file
 	fstream disk;
     openDisk(devicePath, disk);
 
 	// Initialize super block
-	SuperBlock sb = initSuperBlock(disk);
-
-	// Write the superblock to the file
-	disk.seekp(0);
-	disk.write(reinterpret_cast<char*>(&sb), sizeof(sb));
+	initSuperBlock(disk);
 
 	// Allocate blocks
 	char block[block_size] = {0}; // Initialize all bytes to 0
@@ -61,87 +59,61 @@ int createDisk(const string& devicePath){
 		rc = 0;
 	}
 
-	// Find a free inode for the root directory
-	int rootInodeIndex = 0;
-
 	// Initialize the root directory inode
-	Inode rootInode;
-
-	// Set the root directory inode's mode to read, write, and execute for all
-	rootInode.num = rootInodeIndex;
-	rootInode.mode = 0777;
-	rootInode.nlink = 2;
-	rootInode.uid = 0;
-	rootInode.gid = 0;
-	rootInode.size = 0;
-	rootInode.atime = time(nullptr);
-	rootInode.mtime = time(nullptr);
-	rootInode.ctime = time(nullptr);
-	rootInode.blockPointers[0] = sb.first_data_block;
-	
-
-	// Write the root inode to the file
-	disk.seekp(rootInodeIndex * block_size);
-	disk.write(reinterpret_cast<char*>(&rootInode), sizeof(rootInode));
+	initInode(disk);
 
 	// Initialize the '.' directory entry
-	dentry rootDentry;
-	rootDentry.inode = rootInodeIndex;
-	strcpy(rootDentry.fname, ".");
-
-	// Write the '.' directory entry to the file
-	disk.seekp((rootInodeIndex + 1) * block_size);
-	disk.write(reinterpret_cast<char*>(&rootDentry), sizeof(rootDentry));
-
-	// Initialize the '..' directory entry
-	dentry dotrootDentry;
-	dotrootDentry.inode = rootInodeIndex;
-	strcpy(dotrootDentry.fname, "..");
-
-
-	// Write the root directory entry to the file
-	disk.seekp((rootInodeIndex + 1) * block_size);
-	disk.write(reinterpret_cast<char*>(&rootDentry), sizeof(rootDentry));
-
-	disk.close();
+	initRootDentry(disk);
 
 	return rc;
 }
 
-void closeDisk(ifstream& diskFile){
+//******************************************************************************
+void closeDisk(fstream& diskFile){
     // Close the file
     if (diskFile.is_open()) {
         diskFile.close();
     }
 }
 
-void readBlock(fstream& disk, int blockNumber, char* data, int blockSize) {
-    // Calculate the position in the file
-    streampos position = blockNumber * blockSize;
-
-    // Move the read position to the start of the block
-    disk.seekg(position);
-
-    // Read the data from the block
-    disk.read(data, blockSize);
-}
-
+//******************************************************************************
 void readSuperBlock(fstream& disk, SuperBlock& sb) {
-    // Read the superblock from the file
-    disk.read(reinterpret_cast<char*>(&sb), sizeof(sb));
+	disk.seekg(0, ios_base::beg);
+	// Read the superblock from the disk
+    char buffer[BLOCK_SIZE];
+	disk.read(buffer, BLOCK_SIZE);
 
-    // // Read the vectors from the file
-    // sb.inode_freelist.resize(sb.nInodes);
-    // for (bool& b : sb.inode_freelist) {
-    //     disk.read(reinterpret_cast<char*>(&b), sizeof(b));
-    // }
-    // sb.block_freelist.resize(sb.nBlocks);
-    // for (bool& b : sb.block_freelist) {
-    //     disk.read(reinterpret_cast<char*>(&b), sizeof(b));
-    // }
+    sb = *reinterpret_cast<SuperBlock*>(buffer);
 }
 
-SuperBlock initSuperBlock(fstream& disk) {
+//******************************************************************************
+void readInode(fstream& disk, int inum, Inode& inode){
+	disk.seekg(BLOCK_SIZE + (inum * INODE_SIZE), ios_base::beg);
+    char buffer[INODE_SIZE];
+	disk.read(buffer, INODE_SIZE);
+
+    inode = *reinterpret_cast<Inode*>(buffer);
+}
+
+//******************************************************************************
+void readDentry(fstream& disk, std::vector<dentry>& entries){
+    disk.seekg(FIRST_DATA_BLOCK * BLOCK_SIZE, ios_base::beg);
+
+    // Read the first dentry to get the number of entries
+    char buffer[sizeof(dentry)];
+    disk.read(buffer, sizeof(dentry));
+    dentry dirEntry = *reinterpret_cast<dentry*>(buffer);
+
+    // Now read the rest of the entries
+    for (int i = 0; i < dirEntry.nEntries; ++i) {
+        disk.read(buffer, sizeof(dentry));
+        dentry entry = *reinterpret_cast<dentry*>(buffer);
+        entries.push_back(entry);
+    }
+}
+
+//******************************************************************************
+void initSuperBlock(fstream& disk) {
     // Initialize super block
     SuperBlock sb;
 
@@ -161,20 +133,65 @@ SuperBlock initSuperBlock(fstream& disk) {
     // sb.block_freelist[0] = true;
 
     // Write the superblock to the file
-    disk.write(reinterpret_cast<char*>(&sb), sizeof(sb));
+    disk.seekp(0);
+	disk.write(reinterpret_cast<char*>(&sb), BLOCK_SIZE);
 
 	// for (bool b : sb.inode_freelist) {
     //     disk.write(reinterpret_cast<char*>(&b), sizeof(b));
     // }
     // for (bool b : sb.block_freelist) {
     //     disk.write(reinterpret_cast<char*>(&b), sizeof(b));
-    // }
+    // } 
 
-
-	std::cout << "block_size: " << sb.block_size << std::endl;
-    std::cout << "inode_size: " << sb.inode_size << std::endl;
-    std::cout << "num_blocks: " << sb.nBlocks << std::endl;
- 
-
-	return sb;
 }
+
+//******************************************************************************
+void initInode(fstream& disk) {
+	// Initialize the inode
+	Inode inode;
+
+	// Set the inode's mode to read, write, and execute for all
+	inode.num = 0;
+	inode.mode = 00777;
+	inode.nlink = 1;
+	inode.uid = 0;
+	inode.gid = 0;
+	inode.size = 0;
+	inode.atime = time(nullptr);
+	inode.mtime = time(nullptr);
+	inode.ctime = time(nullptr);
+
+	// Initialize blockPointers[] to an invalid block number
+    for (int i = 0; i < 11; i++) {
+        inode.blockPointers[i] = 0;
+    }
+
+	// Write the inode to the file
+	disk.seekp(BLOCK_SIZE);
+	disk.write(reinterpret_cast<char*>(&inode), sizeof(inode));
+}
+
+//******************************************************************************
+dentry initRootDentry(fstream& disk) {
+    // Initialize the root directory inode
+    dentry rootDentry;
+    rootDentry.inode = 0; // In the root directory, '.' and '..' point to the same inode
+    strcpy(rootDentry.fname, ".");
+    rootDentry.nEntries = 2; // Initialize nEntries
+
+    // Initialize the parent directory inode
+    dentry parentDentry;
+    parentDentry.inode = 0; // In the root directory, '.' and '..' point to the same inode
+    strcpy(parentDentry.fname, "..");
+
+    // Write the root directory entry to the disk
+    disk.seekp(FIRST_DATA_BLOCK * BLOCK_SIZE, ios_base::beg);
+    disk.write(reinterpret_cast<const char*>(&rootDentry), sizeof(dentry));
+
+    // Write the parent directory entry to the disk
+    disk.write(reinterpret_cast<const char*>(&parentDentry), sizeof(dentry));
+
+	return rootDentry;
+}
+
+

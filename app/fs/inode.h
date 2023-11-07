@@ -28,8 +28,6 @@ struct Inode {
 	short gid;
 	// size in bytes
 	int size;
-	// number of blocks allocated
-	int nblocks;
 	// access time
 	time_t atime;
 	// modification time

@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 // Define the maximum length of file name
-#define EXT2_NAME_LEN 256
+#define EXT2_NAME_LEN 30
 
 // Define the type of file
 #define FILE_TYPE 0
@@ -28,8 +28,8 @@
 
 struct dentry{
 	int inode;
-
 	char fname[EXT2_NAME_LEN];
+	int nEntries;
 };
 
 #endif
