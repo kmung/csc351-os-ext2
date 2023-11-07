@@ -10,11 +10,14 @@ class bitmap {
 		std::vector<unsigned char> data; // Store the bitmap data as bytes
 	
 	public:
+        bitmap();
 		bitmap(int size);
+
+        void resize(int newSize);
 
         // Returns true if bit at the given position is set
         // Otherwise, returns false if given position is out of range
-		bool setBit(int pos);
+		bool setBit(int pos, bool value);
 
         // Returns true if bit at the given position is cleared
         // Otherwise, returns false if given position is out of range
@@ -31,6 +34,9 @@ class bitmap {
         std::string getData() const {
             return std::string(data.begin(), data.end());
         }
+
+        // Returns the index of first free in bitmap
+        int findFirstFree();
 
 };
 

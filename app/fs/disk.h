@@ -11,6 +11,7 @@
 #include "inode.h"
 #include "dataBlock.h"
 #include "dentry.h"
+#include "bitmap.h"
 
 using namespace std;
 
@@ -34,6 +35,8 @@ dentry initRootDentry(fstream& disk);
 
 // Read the contents of the disk
 void readSuperBlock(fstream& disk, SuperBlock& sb);
+void readInodeBitmap(fstream& disk, bitmap& inodeBitmap);
+void readBlockBitmap(fstream& disk, bitmap& blockBitmap);
 void readInode(fstream& disk, int inum, Inode& inode);
 void readDentry(fstream& disk, std::vector<dentry>& entries);
 

@@ -104,7 +104,7 @@ void initInodeBitmap(fstream& disk){
 
 	// Set the first bit to 1 to indicate that 
 	// the first inode is in use for the root directory inode
-	myBitmap.setBit(0);
+	myBitmap.setBit(0, true);
 
 	// Get the bitmap data
     string bitmapData = myBitmap.getData();
@@ -120,7 +120,7 @@ void initBlockBitmap(fstream& disk){
 
 	// Set the first bit to 1 to indicate that
 	// the first data block is in use for the root directory
-	myBitmap.setBit(0);
+	myBitmap.setBit(0, true);
 
 	// Get the bitmap data
     string bitmapData = myBitmap.getData();
@@ -195,29 +195,43 @@ void readSuperBlock(fstream& disk, SuperBlock& sb) {
 }
 
 //******************************************************************************
-void readInodeBitmap(fstream& disk, char*& inodeBitmap){
-	// Calculate the size of the bitmap in bytes
-	int bitmapSize = (NINODES + 7) / 8;
+void readInodeBitmap(fstream& disk, bitmap& inodeBitmap){
+    // Calculate the size of the bitmap in bytes
+    int bitmapSize = (NINODES + 7) / 8;
 
-	// Allocate memory for the bitmap
-	inodeBitmap = new char[bitmapSize];
+    // Resize the bitmap to the correct size
+    inodeBitmap.resize(bitmapSize * 8);
 
-	// Read the bitmap from the file
-	disk.seekg(FIRST_INODE_BITMAP * BLOCK_SIZE);
-	disk.read(inodeBitmap, bitmapSize);
+    // Read the bitmap from the file
+    disk.seekg(FIRST_INODE_BITMAP * BLOCK_SIZE);
+    for (int i = 0; i < bitmapSize; ++i) {
+        char byte;
+        disk.read(&byte, 1);
+        for (int j = 0; j < 8; ++j) {
+            bool bit = (byte >> j) & 1;
+            inodeBitmap.setBit(i * 8 + j, bit);
+        }
+    }
 }
 
 //******************************************************************************
-void readBlockBitmap(fstream& disk, char*& blockBitmap){
-	// Calculate the size of the bitmap in bytes
-	int bitmapSize = (NBLOCKS + 7) / 8;
+void readBlockBitmap(fstream& disk, bitmap& blockBitmap){
+    // Calculate the size of the bitmap in bytes
+    int bitmapSize = (NBLOCKS + 7) / 8;
 
-	// Allocate memory for the bitmap
-	blockBitmap = new char[bitmapSize];
+    // Resize the bitmap to the correct size
+    blockBitmap.resize(bitmapSize * 8);
 
-	// Read the bitmap from the file
-	disk.seekg(FIRST_DATA_BITMAP * BLOCK_SIZE); 
-	disk.read(blockBitmap, bitmapSize);
+    // Read the bitmap from the file
+    disk.seekg(FIRST_DATA_BITMAP * BLOCK_SIZE);
+    for (int i = 0; i < bitmapSize; ++i) {
+        char byte;
+        disk.read(&byte, 1);
+        for (int j = 0; j < 8; ++j) {
+            bool bit = (byte >> j) & 1;
+            blockBitmap.setBit(i * 8 + j, bit);
+        }
+    }
 }
 
 //******************************************************************************

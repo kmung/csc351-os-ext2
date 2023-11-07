@@ -5,6 +5,9 @@
 
 using namespace std;
 
+bitmap::bitmap() {
+    size = 0;
+}  
 
 //******************************************************************************
 bitmap::bitmap(int bitmapSize) {
@@ -16,20 +19,21 @@ bitmap::bitmap(int bitmapSize) {
 }
 
 //******************************************************************************
-bool bitmap::setBit(int pos) {
-    // bool rc = pos < size ? true : false;
+void bitmap::resize(int newSize) {
+    size = newSize;
+    data.resize((size + 7) / 8, 0);
+}
+
+//******************************************************************************
+bool bitmap::setBit(int pos, bool value) {
     bool rc = true;
-    if(pos < 0 || pos >= size){
-        rc = false;
+    if (value) {
+        // Set the bit at pos to 1
+        data[pos / 8] |= 1 << (pos % 8);
+    } else {
+        // Set the bit at pos to 0
+        data[pos / 8] &= ~(1 << (pos % 8));
     }
-
-    if (rc) {
-        int byteIndex = pos / 8;
-        int bitOffset = pos % 8;
-        // Set the bit at the given position
-        data[byteIndex] |= (1 << bitOffset);
-    }
-
     return rc;
 }
 
@@ -71,4 +75,16 @@ bool bitmap::getBit(int pos) {
 
     // Get the bit at the given position
     return (data[byteIndex] & (1 << bitOffset)) != 0;
+}
+
+//******************************************************************************
+int bitmap::findFirstFree() {
+    for (int i = 0; i < size; ++i) {
+        if (!getBit(i)) {
+            return i;
+        }
+    }
+
+    // No free bits found
+    return -1;
 }
