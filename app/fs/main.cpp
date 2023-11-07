@@ -22,11 +22,14 @@ int main(int argc, char **argv) {
     // Create a filesystem object
     createDisk(devicePath);
 
+    // Variable to use as a disk image file
     std::fstream disk(devicePath, std::ios::in | std::ios::out | std::ios::binary);
     if (!disk) {
         std::cerr << "Failed to open device: " << devicePath << std::endl;
     }
 
+    // Before use contents in the disk, initialize the structures
+    // Then user can access to data in each content ex) sb.blockSize
     SuperBlock sb;
     readSuperBlock(disk, sb);
 
@@ -35,12 +38,6 @@ int main(int argc, char **argv) {
 
     std::vector<dentry> entries;
     readDentry(disk, entries);
-
-    // // Print the dentries
-    // for (const auto& dentry : entries) {
-    //     std::cout << "Filename: " << dentry.fname << std::endl;
-    //     std::cout << "Inode: " << dentry.inode << std::endl;
-    // }
 
     closeDisk(disk);
 

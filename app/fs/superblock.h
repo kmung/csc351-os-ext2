@@ -16,23 +16,20 @@ using namespace std;
 #define BLOCK_SIZE 4 * 1024
 // 128B inode size
 #define INODE_SIZE 128
+// Total number of blocks
+#define NBLOCKS 524288
 // Total number of inode blocks
 #define NINODE_BLOCKS 1024
 // Total number of inodes
 #define NINODES 1024 * 32
-// First data block
-#define FIRST_DATA_BLOCK 1025
+// Total number of data blocks
+#define NDATA_BLOCKS 523264
 
-
-// If each inode can address 1034 blocks (10 direct and 1 single indirect pointer which can address 1024 blocks), and you have 32768 inodes,
-// then you could theoretically address 32768 * 1034 = 33,882,112 blocks.
-// Given a block size of 4KB, this would be 135,528,448 KB or approximately 129,000 MB, which is far larger than your 2GB memory.
-// However, it's important to note that not every inode will necessarily use all of its addressable blocks. 
-// The number of inodes is based on the maximum number of files or directories you expect to have, and each file or directory will use one inode. 
-// Many files will be smaller than the maximum size that an inode can address, so they won't use all of their addressable blocks.
-// In practice, it's common to have more addressable blocks than actual blocks in the memory, because this allows the file system to handle a large number of small files efficiently. 
-// If you find that you're running out of memory, you might need to reduce the number of inodes or the number of addressable blocks per inode.
-// So, having 32768 inodes for a 2GB memory with your current inode structure (10 direct pointers and 1 single indirect pointer) is reasonable.
+// Location of bitmaps, first inode, and first data block
+#define FIRST_INODE_BITMAP 1
+#define FIRST_DATA_BITMAP 2
+#define FIRST_INODE 18
+#define FIRST_DATA_BLOCK 1042
 
 
 // Super block locates on the first block of the memory
@@ -48,10 +45,6 @@ struct SuperBlock {
 		uint64_t nInodes = BLOCK_SIZE * NINODE_BLOCKS / INODE_SIZE;
 		uint64_t first_data_block = NINODE_BLOCKS + 1;
 
-		// List to keep track of free inode and datablock
-		// If data exists in block, return true. Otherwise return false
-		// vector<bool> inode_freelist;
-    	// vector<bool> block_freelist;
 };
 
 
