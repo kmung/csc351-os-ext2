@@ -22,10 +22,20 @@ class fs {
 		fstream disk;
 		SuperBlock sb;
 		Inode inode;
-		std::vector<dentry> entries;
+		vector<dentry> rootEntry;
 		bitmap inodeBitmap;
 		bitmap blockBitmap;
+
+		// Write new Inode
 		void writeInode(fstream& disk, int inum, Inode& inode);
+
+		// Write new Dentry
+		void writeDentry(fstream& disk, const vector<dentry>& entries, int inum);
+
+		void writeStartDentry(fstream& disk, int inum, int parentInum);
+
+		// Update parent directory entry when creating a new file
+		void updateDentry(fstream& disk, string fileName, int& parentInum, int currnetInum);
 
 	public:
 		fs();
@@ -34,7 +44,7 @@ class fs {
 		
 
 		// refer to https://man7.org/linux/man-pages/man2/syscalls.2.html for more
-		int my_creat(const string& name, int mode);
+		int my_creat(const string& name, mode_t mode);
 
 		// int my_read(int fd, char* buffer, int nbytes);
 		// int my_write(int fd, const char* buffer, int nbytes);
@@ -48,4 +58,5 @@ class fs {
 
 
 };
+
 #endif

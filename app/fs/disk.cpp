@@ -67,7 +67,7 @@ int createDisk(const string& devicePath){
 	initInodeBitmap(disk);
 	initBlockBitmap(disk);
 	initFirstInode(disk);
-	initRootDentry(disk);
+	initRootdentry(disk, 0 , 0);
 
 	return rc;
 }
@@ -139,53 +139,47 @@ void initFirstInode(fstream& disk) {
 	// Set the inode's mode to read, write, and execute for all
 	inode.num = 0;
 	inode.mode = 00777;
-	inode.nlink = 1;
-	inode.uid = 0;
-	inode.gid = 0;
+	inode.nlink = 2;
+	inode.uid = 1000;
+	inode.gid = 1000;
 	inode.size = 0;
 	inode.atime = time(nullptr);
 	inode.mtime = time(nullptr);
 	inode.ctime = time(nullptr);
-
-	// Initialize blockPointers[] to an invalid block number
-    for (int i = 0; i < 11; i++) {
-        inode.blockPointers[i] = 0;
-    }
-
-	inode.blockPointers[0] = FIRST_DATA_BLOCK;
+	inode.blockAddress = FIRST_DATA_BLOCK;
 
 	// Write the inode to the file
 	disk.seekp(FIRST_INODE * BLOCK_SIZE);
-	disk.write(reinterpret_cast<char*>(&inode), sizeof(inode));
+	disk.write(reinterpret_cast<char*>(&inode), INODE_SIZE);
 }
 
 //******************************************************************************
-dentry initRootDentry(fstream& disk) {
+void initRootdentry(fstream& disk, int inum, int parentInum) {
     // Initialize the root directory inode
     dentry rootDentry;
-    rootDentry.inode = 0; 
+    rootDentry.inode = inum; 
 	// Set entry name to "."
     strcpy(rootDentry.fname, ".");
 	// Set the number of entries to 2 as we have "." and ".."
     rootDentry.nEntries = 2;
 
-    // Initialize the parent directory inode
-    dentry parentDentry;
-    parentDentry.inode = 0; 
-    strcpy(parentDentry.fname, "..");
-
     // Write the root directory entry to the disk
     disk.seekp(FIRST_DATA_BLOCK * BLOCK_SIZE, ios_base::beg);
-    disk.write(reinterpret_cast<const char*>(&rootDentry), sizeof(dentry));
+    disk.write(reinterpret_cast<const char*>(&rootDentry), DENTRY_SIZE);
+
+    // Initialize the parent directory inode
+    dentry parentDentry;
+    parentDentry.inode = parentInum; 
+    strncpy(parentDentry.fname, "..", MAX_NAME_LEN);
+	parentDentry.nEntries = 2;
 
     // Write the parent directory entry to the disk
-    disk.write(reinterpret_cast<const char*>(&parentDentry), sizeof(dentry));
-
-	return rootDentry;
+    disk.write(reinterpret_cast<const char*>(&parentDentry), DENTRY_SIZE);
 }
 
 //******************************************************************************
 void readSuperBlock(fstream& disk, SuperBlock& sb) {
+	// Make sure current position is the beginning of the disk
 	disk.seekg(0, ios_base::beg);
 	// Read the superblock from the disk
     char buffer[BLOCK_SIZE];
@@ -236,28 +230,60 @@ void readBlockBitmap(fstream& disk, bitmap& blockBitmap){
 
 //******************************************************************************
 void readInode(fstream& disk, int inum, Inode& inode){
-	disk.seekg(FIRST_INODE * BLOCK_SIZE + (inum * INODE_SIZE), ios_base::beg);
-    char buffer[INODE_SIZE];
-	disk.read(buffer, INODE_SIZE);
+    // Check if the disk file is open
+    if (!disk.is_open()) {
+		cout << "Disk file is not open" << endl;
+        throw runtime_error("Disk file is not open");
 
+    }
+
+    // Seek to the inode
+    disk.seekg(FIRST_INODE * BLOCK_SIZE + (inum * INODE_SIZE), ios_base::beg);
+
+    // Check if the seek failed
+    if (disk.fail()) {
+		cout << "Failed to seek to inode" << endl;
+        throw runtime_error("Failed to seek to inode");
+    }
+
+    // Read the inode
+    char buffer[INODE_SIZE];
+    disk.read(buffer, INODE_SIZE);
+
+    // Check if the read failed
+    if (disk.fail()) {
+		cout << "Failed to read inode" << endl;
+        throw runtime_error("Failed to read inode");
+    }
+
+    // Convert the buffer to an Inode structure
     inode = *reinterpret_cast<Inode*>(buffer);
 }
 
 //******************************************************************************
-void readDentry(fstream& disk, std::vector<dentry>& entries){
-    disk.seekg(FIRST_DATA_BLOCK * BLOCK_SIZE, ios_base::beg);
+void readDentry(fstream& disk, vector<dentry>& entries, int inum){
+	// Read the inode
+	Inode node;
+	readInode(disk, inum, node);
+
+	// Move pointer to where the dentries are stored 
+    disk.seekg(node.blockAddress * BLOCK_SIZE, ios_base::beg);
 
     // Read the first dentry to get the number of entries
-    char buffer[sizeof(dentry)];
-    disk.read(buffer, sizeof(dentry));
+	// The reason read the first dentry seperately is beause
+	// the number of entries is stored in the first dentry
+    char buffer[DENTRY_SIZE];
+    disk.read(buffer, DENTRY_SIZE);
     dentry dirEntry = *reinterpret_cast<dentry*>(buffer);
+	entries.push_back(dirEntry);
 
     // Now read the rest of the entries
-    for (int i = 0; i < dirEntry.nEntries; ++i) {
-        disk.read(buffer, sizeof(dentry));
+    for (int i = 1; i < dirEntry.nEntries; ++i) {
+        disk.read(buffer, DENTRY_SIZE);
         dentry entry = *reinterpret_cast<dentry*>(buffer);
         entries.push_back(entry);
     }
+
 }
 
 

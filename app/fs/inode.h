@@ -35,8 +35,7 @@ struct Inode {
 	// creation time
 	time_t ctime;
 	// Address of direct blocks
-	// 10 direct blocks and 1 single indirect block
-	uint32_t blockPointers[11];
+	int blockAddress;
 };
 
 #endif

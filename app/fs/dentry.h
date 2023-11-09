@@ -3,7 +3,7 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 // Define the maximum length of file name
-#define EXT2_NAME_LEN 30
+#define MAX_NAME_LEN 120
 
 // Define the type of file
 #define FILE_TYPE 0
@@ -26,9 +26,13 @@
 // Entry for "file1.txt": Inode Number 23456
 
 
+
+// In our file system, each dentry takes one block.
+// As each entry size is 128 (120 of file name, and two integers)
+// 32 entries can be allocated on each dentry.
 struct dentry{
 	int inode;
-	char fname[EXT2_NAME_LEN];
+	char fname[MAX_NAME_LEN];
 	int nEntries;
 };
 

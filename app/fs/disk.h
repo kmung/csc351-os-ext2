@@ -29,15 +29,13 @@ void initSuperBlock(fstream& disk);
 void initBlockBitmap(fstream& disk);
 void initInodeBitmap(fstream& disk);
 void initFirstInode(fstream& disk);
-
-// It has a error when I set it to void, don't know why
-dentry initRootDentry(fstream& disk);
+void initRootdentry(fstream& disk, int inum, int parentInum);
 
 // Read the contents of the disk
 void readSuperBlock(fstream& disk, SuperBlock& sb);
 void readInodeBitmap(fstream& disk, bitmap& inodeBitmap);
 void readBlockBitmap(fstream& disk, bitmap& blockBitmap);
 void readInode(fstream& disk, int inum, Inode& inode);
-void readDentry(fstream& disk, std::vector<dentry>& entries);
+void readDentry(fstream& disk, std::vector<dentry>& entries, int inum);
 
 #endif

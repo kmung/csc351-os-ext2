@@ -16,6 +16,8 @@ using namespace std;
 #define BLOCK_SIZE 4 * 1024
 // 128B inode size
 #define INODE_SIZE 128
+// 128B dentry size
+#define DENTRY_SIZE 128
 // Total number of blocks
 #define NBLOCKS 524288
 // Total number of inode blocks

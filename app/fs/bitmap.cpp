@@ -53,7 +53,7 @@ bool bitmap::clearBit(int pos) {
 
 //******************************************************************************
 bool bitmap::isBitSet(int pos) const {
-    bool rc = pos < size ? true : false;
+    bool rc = ((pos >= 0) && (pos < size)) ? true : false;
 
     if (rc) {
         int byteIndex = pos / 8;
@@ -65,26 +65,15 @@ bool bitmap::isBitSet(int pos) const {
 }
 
 //******************************************************************************
-bool bitmap::getBit(int pos) {
-    if (pos >= size) {
-        return false; // Return false if the position is out of range
-    }
-
-    int byteIndex = pos / 8;
-    int bitOffset = pos % 8;
-
-    // Get the bit at the given position
-    return (data[byteIndex] & (1 << bitOffset)) != 0;
-}
-
-//******************************************************************************
 int bitmap::findFirstFree() {
+    int rc = -1;
     for (int i = 0; i < size; ++i) {
-        if (!getBit(i)) {
-            return i;
+        if (!isBitSet(i)) {
+            rc = i;
+            break;
         }
     }
 
     // No free bits found
-    return -1;
+    return rc;
 }

@@ -4,6 +4,8 @@
 #include <iostream>
 #include <vector>
 
+using namespace std;
+
 class bitmap {
 	private:
 		int size;
@@ -28,11 +30,9 @@ class bitmap {
         // Or given position is out of range
         bool isBitSet(int pos) const;
 
-        bool getBit(int pos);
-
         // Returns the bitmap data as a string
-        std::string getData() const {
-            return std::string(data.begin(), data.end());
+        string getData() const {
+            return string(data.begin(), data.end());
         }
 
         // Returns the index of first free in bitmap
