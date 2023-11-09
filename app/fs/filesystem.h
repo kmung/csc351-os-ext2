@@ -29,9 +29,10 @@ class fs {
 		// Write new Inode
 		void writeInode(fstream& disk, int inum, Inode& inode);
 
-		// Write new Dentry
+		// Write a single Dentry
 		void writeDentry(fstream& disk, const vector<dentry>& entries, int inum);
 
+		// Write a start point of Dentry
 		void writeStartDentry(fstream& disk, int inum, int parentInum);
 
 		// Update parent directory entry when creating a new file

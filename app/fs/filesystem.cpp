@@ -28,6 +28,7 @@ fs::fs() {
         std::cerr << "Failed to open device: " << devicePath << std::endl;
     }
 
+    // Initialize all contents of the disk
     readSuperBlock(disk, sb);
     readInode(disk, 0, inode);
     readDentry(disk, rootEntry, 0);
@@ -54,25 +55,24 @@ int fs::my_creat(const string& fileName, mode_t mode) {
     // Write the inode to disk
     writeInode(disk, inodeNum, newInode);
 
-    Inode node;
-	readInode(disk, inodeNum, node);
-
-    // Mark the inode as used
+    // Mark the inode and data block as used if they found a free one
     if(inodeNum != -1){
         inodeBitmap.setBit(inodeNum, true);
     }
-
     if(blockNum != -1){
         blockBitmap.setBit(blockNum, true);
         blockBitmap.setBit(blockNum, true);
     }
 
     // Update parent directory to include the entry for the new file
-    int parentInum = 0;
+    int parentInum = -1;
     updateDentry(disk, fileName, parentInum, inodeNum);
 
+    // Write the new dentry for the new file
     writeStartDentry(disk, inodeNum, parentInum);
 
+    // Check what parent directory contains
+    // Remove this part if check is not needed
     vector<dentry> parentDentry;
     readDentry(disk, parentDentry, parentInum);
 
@@ -181,6 +181,7 @@ void fs::updateDentry(fstream& disk, string fileName, int& parentInum, int curre
         throw runtime_error("File name is empty");
     }
 
+    // Parse and save given file name(file path)
     istringstream iss(fileName);
     string token;
     vector<string> pathComponents;
@@ -190,39 +191,45 @@ void fs::updateDentry(fstream& disk, string fileName, int& parentInum, int curre
         pathComponents.push_back(token);
     }
 
+    // Read the root directory entry to start searching for the file
     vector<dentry> currentEntry;
     readDentry(disk, currentEntry, 0);
 
-    int inum = 0;
+    // Search for the file in the root directory if the path has at least one subdirectory
     if(pathComponents.size() > 1){
+        // Stop at the last parent directory entry
         for (int i = 0; i < pathComponents.size() - 1; i++) {
             for (int j = 0; j < currentEntry[0].nEntries; j++) {
+                // Check if the current dentry contains the entry for the file path component
                 if (currentEntry[j].fname == pathComponents[i]) {
                     parentInum = currentEntry[j].inode;
+
+                    // For testing, remove it later
                     cout << "Find " << currentEntry[j].fname << ": " << currentEntry[j].inode << endl << endl;
+
+                    // Clear the current entry and update to the next directory entry
                     currentEntry.clear();
                     readDentry(disk, currentEntry, parentInum);
                     break;
                 } else {
+                    // For testing, remove it later
                     cout << pathComponents[i] << " not found" << endl;
                 }
             }
         }
     }
 
-
-    vector<dentry> newEntries;
-
+    // Create the new dentry for the file that will be added to the parent directory
     dentry newEntry;
     newEntry.inode = currentInum;
     strncpy(newEntry.fname, pathComponents.back().c_str(), MAX_NAME_LEN);
     newEntry.nEntries = 2;
 
-    newEntries.push_back(newEntry);
-
-    currentEntry.insert(currentEntry.end(), newEntries.begin(), newEntries.end());
+    // Add the new dentry to the parent directory
+    currentEntry.push_back(newEntry);
     currentEntry[0].nEntries++;
     
+    // Write the updated parent directory entry to the disk
     writeDentry(disk, currentEntry, parentInum);
 }
 
