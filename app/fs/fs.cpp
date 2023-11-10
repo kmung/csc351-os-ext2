@@ -11,11 +11,27 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <ctime>
+#define st_mtime st_mtimespec.tv_sec
+#define st_ctime st_ctimespec.tv_sec
+#define st_ctime st_ctimespec.tv_sec
+
 
 
 using namespace std;
 
 #include "fs.h"
+
+fs::fs() {
+
+}
+
+//******************************************************************************
+
+fs::~fs() {
+
+}
+
+//******************************************************************************
 
 int fs::my_read(int fd, char* buffer, int nbytes) {
     // Use the read function with the file descriptor to read data.
@@ -205,7 +221,7 @@ int fs::my_fstat(int fd, struct stat& buf) {
         cout << "Creation Time:" << createT << endl;
 
         //close file descriptor
-        my_close(fd);
+        //my_close(fd);
 
     } else {
         errC = -1;
