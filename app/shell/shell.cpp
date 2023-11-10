@@ -9,6 +9,8 @@
 #include <string.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
+#include <fstream>
+#include "libraries/json.hpp"
 
 #include "shell.h"
 
@@ -48,6 +50,7 @@ void init_shell() {
       break;
     }
 
+    // get user input
     cin.getline(buffer, MAX_BUFFER_SIZE);
 
     if (send(sock, buffer, strlen(buffer), 0) < 0) {
@@ -61,12 +64,12 @@ void init_shell() {
       break;
     }
 
-    cout << buffer << endl;
+    // cout << buffer << endl;
 
-    // do something with user input
-    if (buffer == "exit") {
-      break;
-    }
+    // // do something with user input
+    // if (buffer == "exit") {
+    //   break;
+    // }
 
   }
  }
