@@ -53,7 +53,6 @@ void init_shell() {
     // get user input
     cin.getline(buffer, MAX_BUFFER_SIZE);
 
-
     // close the shell when user enters exit
     if (string(buffer) == "exit") {
       break;

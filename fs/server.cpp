@@ -162,7 +162,7 @@ vector<string> disassemble_command(const string& command){
 }
 
 // TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
-std::ifstream f(R"(/home/ckmung/Documents/csc351/csc351-os-ext2/fs/commands.json)");
+ifstream f(R"(/home/ckmung/Documents/csc351/csc351-os-ext2/fs/commands.json)");
 json COMMAND_TEMPLATE = json::parse(f);
 
 vector<string> parse_command(const string& command, string& cwd){
