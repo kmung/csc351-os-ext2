@@ -60,13 +60,35 @@ int main(int argc, char **argv) {
         cout << "testdir2\\test3dir\\test2.txt created with fd " << fd << endl << endl << endl;
     }
 
-        fd = filesystem.my_creat("testdir4\\test", 0644);
-    if (fd == -1) {
-        cerr << "Failed to create file\n";
-        return 1;
+    // fd = filesystem.my_creat("", 0644);
+    // if (fd == -1) {
+    //     cerr << "Failed to create file\n";
+    //     return 1;
+    // } else {
+    //     cout << "" << fd << endl << endl << endl;
+    // }
+
+    filesystem.my_close(2);
+
+    filesystem.my_open("testdir2", 0644);
+
+    struct stat buf;
+
+    // filesystem.my_fstat(3, buf);
+    // cout << "testdir\\test.txt inf: " << endl;
+    // cout << "Inode: " << buf.st_ino << endl;
+    // cout << "Atime: " << buf.st_atime << endl;
+    // cout << "Size: " << buf.st_size << endl;
+
+    if(filesystem.my_fstat(2, buf) == 0){
+        cout << "testdir2 inf: " << endl;
+        cout << "Inode: " << buf.st_ino << endl;
+        cout << "Atime: " << buf.st_atime << endl;
+        cout << "Size: " << buf.st_size << endl;
     } else {
-        cout << "testdir4\\test created with fd " << fd << endl << endl << endl;
+        cout << "testdir2 not found" << endl;
     }
+    
 
     return 0;
 }

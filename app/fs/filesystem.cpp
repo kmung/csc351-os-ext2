@@ -8,6 +8,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sstream>
+#include <fcntl.h>
+#include <algorithm>
 
 #include "filesystem.h"
 #include "disk.h"
@@ -50,6 +52,21 @@ fs::~fs() {
 //******************************************************************************
 
 int fs::my_creat(const string& fileName, mode_t mode) {
+    // Check if the disk file is open
+    if (!disk.is_open()) {
+        throw runtime_error("Disk file is not open");
+    }
+
+    // Check if the file name is empty
+    if (fileName.empty()) {
+        throw runtime_error("File name is empty");
+    }
+
+    // // Check if the mode is valid
+    // if ((mode & S_IFMT) != S_IFREG) {
+    //     throw runtime_error("Invalid mode. Only regular files are supported.");
+    // }
+
     // Extract the file name from the file path
     size_t pos = fileName.find_last_of("/\\");
     string fName = fileName.substr(pos + 1);
@@ -59,8 +76,7 @@ int fs::my_creat(const string& fileName, mode_t mode) {
     int blockNum = blockBitmap.findFirstFree();
 
     // Initialize the inode
-    // Gid and Uid is not using for this assignment
-    // So set them to 1000 for now
+    // Gid and Uid is not using for this assignment, set them to 1000 for now
     // As blocknum is the index of the data block, add it to the first data block address
     Inode newInode{mode, inodeNum, 2, 1000, 1000, 0, time(nullptr), time(nullptr), time(nullptr), FIRST_DATA_BLOCK + blockNum};
 
@@ -72,6 +88,7 @@ int fs::my_creat(const string& fileName, mode_t mode) {
         inodeBitmap.setBit(inodeNum, true);
     }
     if(blockNum != -1){
+        // Mark two datablocks, one for the dentry, one for the file content
         blockBitmap.setBit(blockNum, true);
         blockBitmap.setBit(blockNum + 1, true);
     }
@@ -102,33 +119,125 @@ int fs::my_creat(const string& fileName, mode_t mode) {
         throw runtime_error("Parent directory not found");
     }
 
-    // Check what parent directory contains
-    // Remove this part if check is not needed
-    vector<dentry> parentDentry;
-    readDentry(disk, parentDentry, parentInum);
-
-    cout << endl << "Last parent contains:" << endl;
-    for (int i = 0; i < parentDentry[0].nEntries; i++) {
-        if (i < 0 || i >= parentDentry.size()) {
-            cout << "Index out of range" << endl;
-            throw out_of_range("Index out of range");
-        }
-
-        if (parentDentry[i].fname == nullptr) {
-            cout << "fname is not initialized" << endl; 
-            throw runtime_error("fname is not initialized");
-        }
-
-        // If inode is a pointer
-        if (parentDentry[i].inode == -1) {
-            cout << "inode is not initialized" << endl;
-            throw runtime_error("inode is not initialized");
-        }
-        cout << parentDentry[i].fname << ": " << parentDentry[i].inode << endl;
-    }
+    // Mark openFdTable to indicate the file is opened
+    openFdTable.push_back(inodeNum);
 
     // Return the inode number as the file descriptor
     return inodeNum;
+}
+
+//******************************************************************************
+int fs::my_open(const char *pathname, mode_t mode){
+    int rc = -1;
+    string pathStr = pathname;
+    size_t pos = pathStr.find_last_of("\\");
+    string filename = pathStr.substr(pos + 1);
+
+    int parentInum;
+    vector<dentry> parentDentry;
+    findParent(disk, pathname, parentDentry, parentInum);
+
+    // Check if the file exists in the parent directory
+    for (int i = 0; i < parentDentry[0].nEntries; i++) {
+        if (parentDentry[i].fname == filename) {
+            // The file exists, return its file descriptor (inode number)
+            rc = parentDentry[i].inode;
+
+            // Add the file descriptor to the open file table
+            openFdTable.push_back(rc);
+
+            break;
+        }
+    }
+
+    return rc;
+
+}
+
+//******************************************************************************
+int fs::my_close(int fd){
+    int rc = -1;
+
+    if(find(openFdTable.begin(), openFdTable.end(), fd) == openFdTable.end()){
+        cout << "File descriptor not found" << endl;
+    } else {
+        // Remove the file descriptor from the open file table
+        openFdTable.erase(find(openFdTable.begin(), openFdTable.end(), fd));
+        rc = 0;
+    }
+
+    return rc; 
+}
+
+//******************************************************************************
+int fs::my_stat(const string& pathname, struct stat& buf) {
+    int rc = -1;
+    string pathStr = pathname;
+    size_t pos = pathStr.find_last_of("\\");
+    string filename = pathStr.substr(pos + 1);
+
+    int parentInum;
+    int inum = -1;
+    vector<dentry> parentDentry;
+    findParent(disk, pathname, parentDentry, parentInum);
+
+    // Check if the file exists in the parent directory
+    for (int i = 0; i < parentDentry[0].nEntries; i++) {
+        if (parentDentry[i].fname == filename) {
+            inum = parentDentry[i].inode;
+            rc = 0;
+            break;
+        }
+    }
+
+    if(rc == 0) {
+        // Read the inode from disk
+        Inode inode;
+        readInode(disk, inum, inode);
+
+        // Fill the stat structure
+        buf.st_mode = inode.mode;
+        buf.st_ino = inode.num;
+        buf.st_nlink = inode.nlink;
+        buf.st_uid = inode.uid;
+        buf.st_gid = inode.gid;
+        buf.st_size = inode.size;
+        buf.st_atime = inode.atime;
+        buf.st_mtime = inode.mtime;
+        buf.st_ctime = inode.ctime;
+    } else {
+        cout << "File not found" << endl;
+        throw runtime_error("File not found");
+    }
+
+    return rc;
+}
+
+//******************************************************************************
+int fs::my_fstat(int fd, struct stat& buf) {
+    int rc = -1;
+
+    // Check if the file descriptor is in openFdTable
+    if (find(openFdTable.begin(), openFdTable.end(), fd) != openFdTable.end()) {
+        // Read the inode from disk
+        Inode inode;
+        readInode(disk, fd, inode);
+
+        // Fill the stat structure
+        buf.st_mode = inode.mode;
+        buf.st_ino = inode.num;
+        buf.st_nlink = inode.nlink;
+        buf.st_uid = inode.uid;
+        buf.st_gid = inode.gid;
+        buf.st_size = inode.size;
+        buf.st_atime = inode.atime;
+        buf.st_mtime = inode.mtime;
+        buf.st_ctime = inode.ctime;
+
+        rc = 0;
+    }
+
+    return rc;
 }
 
 //******************************************************************************
@@ -203,16 +312,6 @@ void fs::writeStartDentry(fstream& disk, int inum, int parentInum) {
 
 //******************************************************************************
 void fs::findParent(fstream& disk, string fileName, vector<dentry>& parentDentries, int& parentInum) {
-    // Check if the disk file is open
-    if (!disk.is_open()) {
-        throw runtime_error("Disk file is not open");
-    }
-
-    // Check if the file name is empty
-    if (fileName.empty()) {
-        throw runtime_error("File name is empty");
-    }
-
     // Parse and save given file name(file path)
     istringstream iss(fileName);
     string token;
@@ -270,16 +369,6 @@ void fs::findParent(fstream& disk, string fileName, vector<dentry>& parentDentri
 
 // //******************************************************************************
 void fs::updateParentDentry(fstream& disk, string fileName, int inum, vector<dentry> parentDentries, int parentInum) {
-    // Check if the disk file is open
-    if (!disk.is_open()) {
-        throw runtime_error("Disk file is not open");
-    }
-
-    // Check if the file name is empty
-    if (fileName.empty()) {
-        throw runtime_error("File name is empty");
-    }
-
     // Extract the file name from the file path
     size_t pos = fileName.find_last_of("\\");
     string fName = fileName.substr(pos + 1);

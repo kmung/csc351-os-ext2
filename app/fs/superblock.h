@@ -33,6 +33,8 @@ using namespace std;
 #define FIRST_INODE 18
 #define FIRST_DATA_BLOCK 1042
 
+#define MAX_OPEN_FILES 1024 * 4096 / 128
+
 
 // Super block locates on the first block of the memory
 // It contains the entire information of file system

@@ -25,6 +25,9 @@ class fs {
 		bitmap inodeBitmap;
 		bitmap blockBitmap;
 
+		// Store fd of opened files
+		vector<int> openFdTable;
+
 		// Write new Inode
 		void writeInode(fstream& disk, int inum, Inode& inode);
 
@@ -45,17 +48,21 @@ class fs {
 	public:
 		fs();
 		~fs();
-		
+
 		// refer to https://man7.org/linux/man-pages/man2/syscalls.2.html for more
 		int my_creat(const string& name, mode_t mode);
+		int my_open(const char *pathname, mode_t mode);
+		int my_close(int fd);
+		int my_stat(const string& name, struct stat& buf);
+		int my_fstat(int fd, struct stat& buf);
 
 		// int my_read(int fd, char* buffer, int nbytes);
 		// int my_write(int fd, const char* buffer, int nbytes);
 		// int my_Iseek(int fd, off_t offset, int when);
-		// int my_fstat(int fd, struct stat* buf);
-		// int my_open(const char *pathname, mode_t mode);
-		// int my_close(int fd);
-		// int my_stat(const string& name, struct stat& buf);
+		
+		
+		
+		
 
 		int fd;
 
