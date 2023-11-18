@@ -8,7 +8,6 @@
 #include "disk.h"
 #include "superblock.h"
 #include "inode.h"
-#include "dataBlock.h"
 #include "dentry.h"
 #include "filesystem.h"
 
@@ -23,18 +22,50 @@ int main(int argc, char **argv) {
     // Create a new file
     fd = filesystem.my_creat("testdir", 0644);
     if (fd == -1) {
-        std::cerr << "Failed to create file\n";
+        cerr << "Failed to create file\n";
         return 1;
     } else {
-        std::cout << "File created with fd " << fd << '\n' << endl;
+        cout << "testdir created with fd " << fd << endl << endl << endl;
+    }
+
+    fd = filesystem.my_creat("testdir2", 0644);
+    if (fd == -1) {
+        cerr << "Failed to create file\n";
+        return 1;
+    } else {
+        cout << "testdir2 created with fd " << fd << endl << endl << endl;
     }
 
     fd = filesystem.my_creat("testdir\\test.txt", 0644);
     if (fd == -1) {
-        std::cerr << "Failed to create file\n";
+        cerr << "Failed to create file\n";
         return 1;
     } else {
-        std::cout << "File created with fd " << fd << '\n' << endl;
+        cout << "testdir\\test.txt created with fd " << fd << endl << endl << endl;
+    }
+
+    fd = filesystem.my_creat("testdir2\\test3dir", 0644);
+    if (fd == -1) {
+        cerr << "Failed to create file\n";
+        return 1;
+    } else {
+        cout << "testdir2\\test3dir created with fd " << fd << endl << endl << endl;
+    }
+
+    fd = filesystem.my_creat("testdir2\\test3dir\\test2.txt", 0644);
+    if (fd == -1) {
+        cerr << "Failed to create file\n";
+        return 1;
+    } else {
+        cout << "testdir2\\test3dir\\test2.txt created with fd " << fd << endl << endl << endl;
+    }
+
+        fd = filesystem.my_creat("testdir4\\test", 0644);
+    if (fd == -1) {
+        cerr << "Failed to create file\n";
+        return 1;
+    } else {
+        cout << "testdir4\\test created with fd " << fd << endl << endl << endl;
     }
 
     return 0;

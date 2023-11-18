@@ -25,7 +25,7 @@ fs::fs() {
     // Initialize the disk member variable
     disk.open(devicePath, std::ios::in | std::ios::out | std::ios::binary);
     if (!disk) {
-        std::cerr << "Failed to open device: " << devicePath << std::endl;
+        cerr << "Failed to open device: " << devicePath << std::endl;
     }
 
     // Initialize all contents of the disk
@@ -34,6 +34,11 @@ fs::fs() {
     readDentry(disk, rootEntry, 0);
     readInodeBitmap(disk, inodeBitmap);
     readBlockBitmap(disk, blockBitmap);
+
+    // Set the first inode and first two data blocks as used
+    blockBitmap.setBit(0, true);
+    blockBitmap.setBit(1, true);
+    inodeBitmap.setBit(0, true);
 }
 
 //******************************************************************************
@@ -45,37 +50,64 @@ fs::~fs() {
 //******************************************************************************
 
 int fs::my_creat(const string& fileName, mode_t mode) {
-    // Find a free inode
+    // Extract the file name from the file path
+    size_t pos = fileName.find_last_of("/\\");
+    string fName = fileName.substr(pos + 1);
+
+    // Find a free inode and data block
     int inodeNum = inodeBitmap.findFirstFree();
     int blockNum = blockBitmap.findFirstFree();
 
     // Initialize the inode
+    // Gid and Uid is not using for this assignment
+    // So set them to 1000 for now
+    // As blocknum is the index of the data block, add it to the first data block address
     Inode newInode{mode, inodeNum, 2, 1000, 1000, 0, time(nullptr), time(nullptr), time(nullptr), FIRST_DATA_BLOCK + blockNum};
 
     // Write the inode to disk
     writeInode(disk, inodeNum, newInode);
 
-    // Mark the inode and data block as used if they found a free one
+    // Mark the inode and data block as used if they found enough free
     if(inodeNum != -1){
         inodeBitmap.setBit(inodeNum, true);
     }
     if(blockNum != -1){
         blockBitmap.setBit(blockNum, true);
-        blockBitmap.setBit(blockNum, true);
+        blockBitmap.setBit(blockNum + 1, true);
     }
 
-    // Update parent directory to include the entry for the new file
+    // Find the parent directory of the new file
+    // If the parent directory is not found, parent Inum will be -1, then throw an error
     int parentInum = -1;
-    updateDentry(disk, fileName, parentInum, inodeNum);
+    vector<dentry> parentDentries;
+    findParent(disk, fileName, parentDentries, parentInum);
 
-    // Write the new dentry for the new file
-    writeStartDentry(disk, inodeNum, parentInum);
+    if(parentInum >= 0){
+        // If parent directory exists,
+        // Update the parent directory entry to include the new file
+        updateParentDentry(disk, fileName, inodeNum, parentDentries, parentInum);
+
+        // Write the new dentry for the new file
+        writeStartDentry(disk, inodeNum, parentInum);
+
+    } else {
+        cout << "Parent directory not found" << endl;
+        // If failed to find parent directory, free the inode and data block
+        // Inode still remains on the disk, but it will be overwritten later
+        inodeBitmap.setBit(inodeNum, false);
+        blockBitmap.setBit(blockNum, false);
+        blockBitmap.setBit(blockNum + 1, false);
+
+        // Throw an error
+        throw runtime_error("Parent directory not found");
+    }
 
     // Check what parent directory contains
     // Remove this part if check is not needed
     vector<dentry> parentDentry;
     readDentry(disk, parentDentry, parentInum);
 
+    cout << endl << "Last parent contains:" << endl;
     for (int i = 0; i < parentDentry[0].nEntries; i++) {
         if (i < 0 || i >= parentDentry.size()) {
             cout << "Index out of range" << endl;
@@ -107,7 +139,7 @@ void fs::writeInode(fstream& disk, int inodeNum, Inode& inode) {
     }
 
     // Calculate the position of the inode in the file
-    int pos = FIRST_INODE * BLOCK_SIZE + inodeNum * INODE_SIZE;
+    int pos = FIRST_INODE * BLOCK_SIZE + (inodeNum * INODE_SIZE);
 
     // Seek to the position of the inode
     disk.seekp(pos);
@@ -148,29 +180,29 @@ void fs::writeStartDentry(fstream& disk, int inum, int parentInum) {
     readInode(disk, inum, node);
 
     // Seek to the data block of the directory
-    disk.seekp(node.blockAddress * BLOCK_SIZE, ios_base::beg);
+    disk.seekp((node.blockAddress) * BLOCK_SIZE, ios_base::beg);
 
     // Initialize a dentry structure for "."
     dentry dotEntry;
     dotEntry.inode = inum;
-    strncpy(dotEntry.fname, ".", MAX_NAME_LEN);
+    strncpy(dotEntry.fname, "itself-start", MAX_NAME_LEN);
     dotEntry.nEntries = 2;
 
     // Write the "." dentry to the data block
-    disk.write(reinterpret_cast<const char*>(&dotEntry), sizeof(dentry));
+    disk.write(reinterpret_cast<const char*>(&dotEntry), DENTRY_SIZE);
 
     // Initialize a dentry structure for ".."
     dentry dotDotEntry;
     dotDotEntry.inode = parentInum;
-    strncpy(dotDotEntry.fname, "..", MAX_NAME_LEN);
+    strncpy(dotDotEntry.fname, "parent-start", MAX_NAME_LEN);
     dotDotEntry.nEntries = 2;
 
     // Write the ".." dentry to the data block
-    disk.write(reinterpret_cast<const char*>(&dotDotEntry), sizeof(dentry));
+    disk.write(reinterpret_cast<const char*>(&dotDotEntry), DENTRY_SIZE);
 }
 
 //******************************************************************************
-void fs::updateDentry(fstream& disk, string fileName, int& parentInum, int currentInum) {
+void fs::findParent(fstream& disk, string fileName, vector<dentry>& parentDentries, int& parentInum) {
     // Check if the disk file is open
     if (!disk.is_open()) {
         throw runtime_error("Disk file is not open");
@@ -191,176 +223,78 @@ void fs::updateDentry(fstream& disk, string fileName, int& parentInum, int curre
         pathComponents.push_back(token);
     }
 
-    // Read the root directory entry to start searching for the file
-    vector<dentry> currentEntry;
-    readDentry(disk, currentEntry, 0);
+    // For the case when the path is just contains one file name
+    // Parent inum is 0, which is the root directory as default
+    readDentry(disk, parentDentries, 0);
+    parentInum = 0;
 
     // Search for the file in the root directory if the path has at least one subdirectory
     if(pathComponents.size() > 1){
-        // Stop at the last parent directory entry
+
+        // Terminates the loop when finish searching all parents
         for (int i = 0; i < pathComponents.size() - 1; i++) {
-            for (int j = 0; j < currentEntry[0].nEntries; j++) {
+
+            // Scan all entries in parent dentries to find the entry for the file path component
+            for (int j = 0; j < parentDentries[0].nEntries; j++) {
+
                 // Check if the current dentry contains the entry for the file path component
-                if (currentEntry[j].fname == pathComponents[i]) {
-                    parentInum = currentEntry[j].inode;
+                if (parentDentries[j].fname == pathComponents[i]) {
+                    parentInum = parentDentries[j].inode;
 
                     // For testing, remove it later
-                    cout << "Find " << currentEntry[j].fname << ": " << currentEntry[j].inode << endl << endl;
+                    cout << endl << "Find " << parentDentries[j].fname << ", inum : " << parentDentries[j].inode << endl;
 
                     // Clear the current entry and update to the next directory entry
-                    currentEntry.clear();
-                    readDentry(disk, currentEntry, parentInum);
+                    parentDentries.clear();
+                    readDentry(disk, parentDentries, parentInum);
+
+                    // Print out the contents of parentDentries
+                    cout << "Current Dentry contains:" << endl;
+                    for (int i = 0; i < parentDentries.size(); i++) {
+                        cout << "Entry " << i+1 << ":" << endl;
+                        cout << "\tInode: " << parentDentries[i].inode << endl;
+                        cout << "\tFile Name: " << parentDentries[i].fname << endl;
+                        cout << "\tNumber of Entries: " << parentDentries[i].nEntries << endl;
+                    }
+
                     break;
+
                 } else {
-                    // For testing, remove it later
-                    cout << pathComponents[i] << " not found" << endl;
+                    // If fail to find parent, return -1 as parentInum
+                    parentInum = -1;
                 }
             }
         }
     }
+}
+
+// //******************************************************************************
+void fs::updateParentDentry(fstream& disk, string fileName, int inum, vector<dentry> parentDentries, int parentInum) {
+    // Check if the disk file is open
+    if (!disk.is_open()) {
+        throw runtime_error("Disk file is not open");
+    }
+
+    // Check if the file name is empty
+    if (fileName.empty()) {
+        throw runtime_error("File name is empty");
+    }
+
+    // Extract the file name from the file path
+    size_t pos = fileName.find_last_of("\\");
+    string fName = fileName.substr(pos + 1);
 
     // Create the new dentry for the file that will be added to the parent directory
     dentry newEntry;
-    newEntry.inode = currentInum;
-    strncpy(newEntry.fname, pathComponents.back().c_str(), MAX_NAME_LEN);
+    newEntry.inode = inum;
+    strncpy(newEntry.fname, fName.c_str(), MAX_NAME_LEN);
     newEntry.nEntries = 2;
 
     // Add the new dentry to the parent directory
-    currentEntry.push_back(newEntry);
-    currentEntry[0].nEntries++;
+    parentDentries.push_back(newEntry);
+    parentDentries[0].nEntries++;
     
     // Write the updated parent directory entry to the disk
-    writeDentry(disk, currentEntry, parentInum);
+    writeDentry(disk, parentDentries, parentInum);
 }
-
-
-
-// //******************************************************************************
-// int fs::my_read(int fd, char* buffer, int nbytes) {
-//     int bytesRead;
-//     try {
-//         bytesRead = read(fd, buffer, nbytes);
-//         if (bytesRead == -1) {
-//             throw exception();
-//         }
-//     } catch (...) {
-//         bytesRead = 0;
-//     }
-
-//     return bytesRead;
-// }
-
-// //******************************************************************************
-
-// int fs::my_write(int fd, const char* buffer, int nbytes) {
-//     // Use the write function with the file descriptor to write data.
-//     int bytesWritten;
-//     try{
-//         bytesWritten = write(fd, buffer, nbytes);
-//         if (bytesWritten == -1) {
-//             throw exception();
-//         }
-//     } catch (...) {
-//         bytesWritten = 0;
-//     }
-
-//     return bytesWritten;
-// }
-
-// //******************************************************************************
-
-// int fs::my_Iseek(int fd, off_t offset, int when) {
-//     // Use the lseek function with the file descriptor to seek.
-//     off_t result = lseek(fd, offset, when);
-//     int rc = 0;
-//     if (result == -1) {
-//         // Handle the error, e.g., print an error message.
-//         std::cerr << "Seek failed" << std::endl;
-//         rc = -1;
-//     }
-
-//     return rc; 
-// }
-
-// //******************************************************************************
-
-// int my_fstat(int fd, struct stat* buf) {
-//     // Call the fstat system call to retrieve file status information.
-//     int rc = 0;
-//     if (fstat(fd, buf) == -1) {
-//         // If fstat returns -1, an error occurred.
-//         std::cerr << "Error: Failed to retrieve file status." << std::endl;
-//         rc = -1; 
-//     }
-
-//     // Successfully retrieved file status information.
-//     return rc; 
-// }
-
-
-// //******************************************************************************
-
-// int fs::my_open(const char *pathname, mode_t mode) {
-//     //try opening the file first
-//     int fd = open(pathname, mode);
-
-//     if (fd == -1) {
-// 		//using the c library, we can error handle and see if the most recent
-// 		//function call occured an error and is set to defined numerical value
-// 		//recognized by the OS  to show that the file doesn't exist
-// 		if (errno == ENOENT) { 
-// 			fd = 0;
-// 			cout << "ERROR! File does not exist!" << endl;
-// 		} else { //another possible error
-// 			cout << "Cannot open file!" << endl;
-// 		}
-//     } else {
-// 		//open call was successful
-// 		cout << "File," << pathname << "is open with descriptor" << fd << "." << endl;
-// 	}
-
-// 	return fd;
-// }
-
-// //******************************************************************************
-
-// int fs::my_close(int fd) {
-// 	int errC;
-// 	//check if file descriptor is valid since it can only be 0,1 or 2
-// 	if (fd < 0) {
-// 		cout << "Invalid file descriptor!" << endl;
-// 	} else {
-// 		errC = close(fd);
-// 		if (errC == -1) {
-// 		//using the c library, we can error handle and see if the most recent
-// 		//function call occured an error and is set to defined numerical value
-// 		//recognized by the OS  to show that the file doesn't exist
-// 			if (errno == ENOENT) { 
-// 				cout << "ERROR! File does not exist!" << endl;
-// 			} else { //another possible error
-// 				cout << "Cannot close file!" << endl;
-// 			}
-//     	} else {
-// 			cout << "File closed successfully!" << endl;
-// 			errC = 0;
-// 		}
-// 	}
-
-// 	return errC;
-// }
-
-// //******************************************************************************
-
-// int fs::my_stat(const string& name, struct stat& buf) {
-//     // Call the stat system call to retrieve file status information for the specified path.
-//     int rc = 0;
-//     if (stat(name.c_str(), &buf) == -1) {
-//         // If stat returns -1, an error occurred.
-//         std::cerr << "Error: Failed to retrieve file status for '" << name << "'" << std::endl;
-//         rc = -1; 
-//     }
-
-//     // Successfully retrieved file status information.
-//     return rc; 
-// }
 
