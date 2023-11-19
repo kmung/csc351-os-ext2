@@ -155,23 +155,25 @@ int fs::my_open(const char *pathname, mode_t mode){
 }
 
 //******************************************************************************
-int fs::my_close(int fd){
-    int rc = -1;
+bool fs::my_close(int fd){
+    bool rc = false;
 
     if(find(openFdTable.begin(), openFdTable.end(), fd) == openFdTable.end()){
         cout << "File descriptor not found" << endl;
     } else {
         // Remove the file descriptor from the open file table
         openFdTable.erase(find(openFdTable.begin(), openFdTable.end(), fd));
-        rc = 0;
+        rc = true;
     }
 
     return rc; 
 }
 
 //******************************************************************************
-int fs::my_stat(const string& pathname, struct stat& buf) {
-    int rc = -1;
+bool fs::my_stat(const string& pathname, struct stat& buf) {
+    // Return false if file not found
+    bool rc = false;
+
     string pathStr = pathname;
     size_t pos = pathStr.find_last_of("\\");
     string filename = pathStr.substr(pos + 1);
@@ -185,12 +187,12 @@ int fs::my_stat(const string& pathname, struct stat& buf) {
     for (int i = 0; i < parentDentry[0].nEntries; i++) {
         if (parentDentry[i].fname == filename) {
             inum = parentDentry[i].inode;
-            rc = 0;
+            rc = true;
             break;
         }
     }
 
-    if(rc == 0) {
+    if(rc) {
         // Read the inode from disk
         Inode inode;
         readInode(disk, inum, inode);
@@ -214,8 +216,8 @@ int fs::my_stat(const string& pathname, struct stat& buf) {
 }
 
 //******************************************************************************
-int fs::my_fstat(int fd, struct stat& buf) {
-    int rc = -1;
+bool fs::my_fstat(int fd, struct stat& buf) {
+    bool rc = false;
 
     // Check if the file descriptor is in openFdTable
     if (find(openFdTable.begin(), openFdTable.end(), fd) != openFdTable.end()) {
@@ -234,10 +236,50 @@ int fs::my_fstat(int fd, struct stat& buf) {
         buf.st_mtime = inode.mtime;
         buf.st_ctime = inode.ctime;
 
-        rc = 0;
+        rc = true;
     }
 
     return rc;
+}
+
+//******************************************************************************
+int fs::my_lseek(int fd, off_t offset, int whence) {
+    int position = -1;
+    bool fileOpened = (find(openFdTable.begin(), openFdTable.end(), fd) != openFdTable.end());
+
+    if(fileOpened){
+        Inode inode;
+        readInode(disk, fd, inode);
+        position = inode.blockAddress * BLOCK_SIZE;
+
+        switch (whence) {
+        case SEEK_SET:
+            // The position is set to file location plus offset bytes
+            position += offset;
+            disk.seekp(position, ios_base::beg);
+            disk.seekg(position, ios_base::beg);
+            break;
+        case SEEK_CUR:
+            // The position is set to its current location plus offset bytes
+            position = disk.tellp() + offset;
+            disk.seekp(position, ios_base::beg);
+            disk.seekg(position, ios_base::beg);
+            break;
+        case SEEK_END:
+            // The position is set to file location plus size of the file plus offset bytes
+            // In this case, offset is negative
+            position += (inode.size + offset);
+            disk.seekp(position, ios_base::beg);
+            disk.seekg(position, ios_base::beg);
+            break;
+        default:
+            cout << "Invalid whence value" << endl;
+            position = -1;
+        }
+    }
+
+
+    return position;
 }
 
 //******************************************************************************

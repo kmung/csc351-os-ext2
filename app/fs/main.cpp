@@ -74,17 +74,23 @@ int main(int argc, char **argv) {
 
     struct stat buf;
 
-    // filesystem.my_fstat(3, buf);
-    // cout << "testdir\\test.txt inf: " << endl;
-    // cout << "Inode: " << buf.st_ino << endl;
-    // cout << "Atime: " << buf.st_atime << endl;
-    // cout << "Size: " << buf.st_size << endl;
-
-    if(filesystem.my_fstat(2, buf) == 0){
-        cout << "testdir2 inf: " << endl;
+    if(filesystem.my_stat("testdir\\test.txt", buf)){
+       cout << "testdir\\test.txt inf: " << endl;
         cout << "Inode: " << buf.st_ino << endl;
         cout << "Atime: " << buf.st_atime << endl;
-        cout << "Size: " << buf.st_size << endl;
+        cout << "Size: " << buf.st_size << endl; 
+    }
+    
+
+    cout << endl;
+
+    struct stat buf2;
+
+    if(filesystem.my_fstat(2, buf2)){
+        cout << "testdir2 inf: " << endl;
+        cout << "Inode: " << buf2.st_ino << endl;
+        cout << "Atime: " << buf2.st_atime << endl;
+        cout << "Size: " << buf2.st_size << endl;
     } else {
         cout << "testdir2 not found" << endl;
     }
