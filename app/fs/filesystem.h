@@ -61,12 +61,16 @@ class fs {
 		// int my_write(int fd, const char* buffer, int nbytes);
 		
 		
-		
-		
-		
+		// TODO, system call
+		// Implement my_creat and my_open to check file mode is correct
+		// Need more study for file mode
+		// What if file is already created?
+		// Test lseek after implement read and write
+		// stat and fstat should print information? or just pass the buffer
 
-		int fd;
-
+		// TODO, commands
+		// How to implement cd? use string currentPath as a private variable in fs class?
+		// lcp, Lcp, ifstream srcFile? need to study
 
 };
 
