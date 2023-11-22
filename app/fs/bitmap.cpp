@@ -5,12 +5,8 @@
 
 using namespace std;
 
-bitmap::bitmap() {
-    size = 0;
-}  
-
 //******************************************************************************
-bitmap::bitmap(int bitmapSize) {
+Bitmap::Bitmap(int bitmapSize) {
     size = bitmapSize;
     // Calculate the number of bytes needed for the bitmap
     int numBytes = (size + 7) / 8;
@@ -19,13 +15,13 @@ bitmap::bitmap(int bitmapSize) {
 }
 
 //******************************************************************************
-void bitmap::resize(int newSize) {
+void Bitmap::resize(int newSize) {
     size = newSize;
     data.resize((size + 7) / 8, 0);
 }
 
 //******************************************************************************
-bool bitmap::setBit(int pos, bool value) {
+bool Bitmap::setBit(int pos, bool value) {
     bool rc = true;
     if (value) {
         // Set the bit at pos to 1
@@ -52,7 +48,7 @@ bool Bitmap::clearBit(int pos) {
 }
 
 //******************************************************************************
-bool bitmap::isBitSet(int pos) const {
+bool Bitmap::isBitSet(int pos) const {
     bool rc = ((pos >= 0) && (pos < size)) ? true : false;
 
     if (rc) {
@@ -65,7 +61,12 @@ bool bitmap::isBitSet(int pos) const {
 }
 
 //******************************************************************************
-int bitmap::findFirstFree() {
+string Bitmap::getData() const {
+    return string(data.begin(), data.end());
+}
+
+//******************************************************************************
+int Bitmap::findFirstFree() {
     int rc = -1;
     for (int i = 0; i < size; ++i) {
         if (!isBitSet(i)) {

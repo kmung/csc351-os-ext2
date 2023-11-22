@@ -12,8 +12,8 @@ class Bitmap {
 		std::vector<unsigned char> data; // Store the bitmap data as bytes
 	
 	public:
-        bitmap();
-		bitmap(int size);
+        Bitmap();
+		Bitmap(int size);
 
         void resize(int newSize);
 
@@ -31,9 +31,7 @@ class Bitmap {
         bool isBitSet(int pos) const;
 
         // Returns the bitmap data as a string
-        string getData() const {
-            return string(data.begin(), data.end());
-        }
+        string getData() const;
 
         // Returns the index of first free in bitmap
         int findFirstFree();

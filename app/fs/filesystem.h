@@ -22,11 +22,14 @@ class fs {
 		SuperBlock sb;
 		Inode inode;
 		vector<dentry> rootEntry;
-		bitmap inodeBitmap;
-		bitmap blockBitmap;
+		Bitmap inodeBitmap;
+		Bitmap blockBitmap;
 
 		// Store fd of opened files
 		vector<int> openFdTable;
+
+		// Allocate
+		int allocateMem(int size, Bitmap bitmap);
 
 		// Write new Inode
 		void writeInode(fstream& disk, int inum, Inode& inode);

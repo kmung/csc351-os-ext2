@@ -50,6 +50,42 @@ fs::~fs() {
 }
 
 //******************************************************************************
+// Allocate memory using the first-fit algorithm
+int fs::allocateMem(int size, Bitmap bitmap) {
+    int rc = -1;
+    int numBlocksNeeded = size / BLOCK_SIZE + (size % BLOCK_SIZE != 0);
+
+    for (int i = 0; i < (MEMORY_SIZE / BLOCK_SIZE); ++i) {
+        int consecutiveFreeBlocks = 0;
+
+        // Check if the current block is free
+        if (!(bitmap.isBitSet(i))) {
+            consecutiveFreeBlocks++;
+
+            // Check the next blocks
+            for (int j = i + 1; (j < (MEMORY_SIZE / BLOCK_SIZE)) && (consecutiveFreeBlocks < numBlocksNeeded); ++j) {
+                if (!(bitmap.isBitSet(j))) {
+                    consecutiveFreeBlocks++;
+                } else {
+                    // Stop checking consecutive blocks if one is not free
+                    break;
+                }
+            }
+
+            // If enough consecutive free blocks are found, mark them as allocated and return the starting index
+            if (consecutiveFreeBlocks == numBlocksNeeded) {
+                for (int k = i; k < i + numBlocksNeeded; ++k) {
+                    // Mark block as allocated
+                    bitmap.setBit(k, 1);
+                }
+                rc = i * BLOCK_SIZE;
+            }
+        }
+    }
+
+    return rc;
+}
+//******************************************************************************
 
 int fs::my_creat(const string& fileName, mode_t mode) {
     // Check if the disk file is open
