@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <time.h>
+#include <vector>
 
 using namespace std;
 
@@ -15,29 +16,39 @@ using namespace std;
 #define BLOCK_SIZE 4 * 1024
 // 128B inode size
 #define INODE_SIZE 128
+// 128B dentry size
+#define DENTRY_SIZE 128
+// Total number of blocks
+#define NBLOCKS 524288
 // Total number of inode blocks
 #define NINODE_BLOCKS 1024
 // Total number of inodes
 #define NINODES 1024 * 32
+// Total number of data blocks
+#define NDATA_BLOCKS 523264
 
-class Superblock {
-	private:
-		uint64_t memorySize = MEMORY_SIZE;
-		uint64_t blockSize = BLOCK_SIZE;
+// Location of bitmaps, first inode, and first data block
+#define FIRST_INODE_BITMAP 1
+#define FIRST_DATA_BITMAP 2
+#define FIRST_INODE 18
+#define FIRST_DATA_BLOCK 1042
+
+#define MAX_OPEN_FILES 1024 * 4096 / 128
+
+
+// Super block locates on the first block of the memory
+// It contains the entire information of file system
+// Although the size of superblock is 1KB, it still use the entire space of first block
+struct SuperBlock {
+
+		uint64_t memory_size = MEMORY_SIZE;
+		uint64_t block_size = BLOCK_SIZE;
 		uint64_t nBlocks = MEMORY_SIZE / BLOCK_SIZE;
-		uint64_t inodeSize = INODE_SIZE;
+		uint64_t inode_size = INODE_SIZE;
 		uint64_t nInodeBlocks = NINODE_BLOCKS;
 		uint64_t nInodes = BLOCK_SIZE * NINODE_BLOCKS / INODE_SIZE;
-		uint64_t firstDataBlock = NINODE_BLOCKS + 1;
-		uint64_t firstFreeInode = 11;
+		uint64_t first_data_block = NINODE_BLOCKS + 1;
 
-		// List to keep track of free inode blocks and free data blocks
-		// Return true if block is free. Otherwise return false.
-		bool *inodeFreeList;
-		bool *blockFreeList; 
-	public:
-		Superblock();
-		bool allocateInode(int &inodeNum);
 };
 
 
