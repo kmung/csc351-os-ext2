@@ -234,7 +234,7 @@ int fs::allocateMem(int allocateSize, int inum, int& curMaxBlocks) {
         numBlocksNeeded = 0;
     }
 
-    int newMaxBlocks = curMaxBlocks + numBlocksNeeded;
+    int newMaxBlocks = curMaxBlocks + numBlocksNeeded + 1;
 
     // Before looking for free blocks, free block bitmaps of the current file
     // If current address has enough space to extend enough blocks
@@ -571,6 +571,11 @@ int fs::my_read(int fd, char* buffer, int nbytes) {
 
                     // As reading starts from current position, do not move pointer
                     disk.read(buffer, rc);
+
+                    // Null-terminate the buffer
+                    buffer[rc] = '\0';
+
+                    cout << buffer << endl;
 
                     if(disk.fail()){
                         if (disk.eof()) {
@@ -952,7 +957,7 @@ int fs::my_mv(const string& srcPath, const string& destPath){
 
     // Find the dentry for the source file and remove it
     int indexToRemove = -1;
-    for (int i = 0; i < srcParentDentries.size(); ++i) {
+    for (int i = 0; i < srcParentDentries[0].nEntries; ++i) {
         if (srcParentDentries[i].fname == srcPath) {
             indexToRemove = i;
             break;
@@ -965,6 +970,7 @@ int fs::my_mv(const string& srcPath, const string& destPath){
 
     // Write the modified dentries back to the disk
     writeDentry(disk, srcParentDentries, srcParentInum);
+
     return rc;
 }
 
@@ -1055,7 +1061,7 @@ int fs::my_ln(const string& srcPath, const string& destPath){
     
     Inode srcnode;
     readInode(disk, inum, srcnode);
-    if(srcnode.mode & S_IFREG && inum != -1){
+    if(inum != -1){
         int fd = my_creat(destPath, srcnode.mode);
         if(fd != -1){
             srcnode.nlink++;
@@ -1063,7 +1069,6 @@ int fs::my_ln(const string& srcPath, const string& destPath){
 
             Inode destnode;
             readInode(disk, fd, destnode);
-            destnode.num = srcnode.num;
             destnode.size = srcnode.size;
             destnode.mode = srcnode.mode;
             destnode.atime = srcnode.atime;
@@ -1081,7 +1086,7 @@ int fs::my_ln(const string& srcPath, const string& destPath){
             
             my_close(fd);
 
-            rc = 0;
+            rc = fd;
         } else {
             cout << "Failed to create destination file" << endl;
         }
