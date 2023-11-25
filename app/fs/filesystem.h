@@ -65,11 +65,18 @@ class fs {
 		int my_read(int fd, char* buffer, int nbytes);
 		int my_write(int fd, const char* buffer, int nbytes);
 		
+		// Need absolute path
 		void my_ls(const string& name);
+		// If parameter is empty, list current directory
 		void my_ls();
+		// It can be absolute path or relative path
 		void my_cd(const string& name);
+		// Need absolute path
 		int my_mkdir(const string& name, mode_t mode);
+		// If path is not given, remove current directory 
 		int my_mkdir(mode_t mode);
+
+		
 		int my_rmdir(const string& name);
 		int my_chown(const string& name, int owner, int group);
 		int my_cp(const string& srcPath, const string& destPath);

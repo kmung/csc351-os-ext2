@@ -797,20 +797,7 @@ int fs::my_mkdir(mode_t mode) {
 //******************************************************************************
 int fs::my_rmdir(const string& path){
     int rc = -1;
-
-    // // Split the path into components
-    // stringstream ss(path);
-    // string token;
-    // vector<string> pathComponents;
-    // while (getline(ss, token, '/')) {
-    //     pathComponents.push_back(token);
-    // }
-
-    // if (pathComponents.size() == 1){
-    //     vector<dentry> entries;
-    //     readDentry(disk, entries, curInum);
-    // }
-
+    
     string pathStr = path;
     size_t pos = pathStr.find_last_of("\\");
     string filename = pathStr.substr(pos + 1);
