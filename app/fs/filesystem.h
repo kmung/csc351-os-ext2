@@ -22,11 +22,14 @@ class fs {
 		SuperBlock sb;
 		Inode inode;
 		vector<dentry> rootEntry;
-		bitmap inodeBitmap;
-		bitmap blockBitmap;
+		Bitmap inodeBitmap;
+		Bitmap blockBitmap;
 
 		// Store fd of opened files
 		vector<int> openFdTable;
+
+		string curPath;
+		int curInum;
 
 		// Write new Inode
 		void writeInode(fstream& disk, int inum, Inode& inode);
@@ -45,33 +48,37 @@ class fs {
 		// Update parent's dentry vector to include new dentry
 		void updateParentDentry(fstream& disk, string fileName, int inum, vector<dentry> parentDentries, int parentInum);
 
+		int allocateMem(int allocateSize, int inum, int& curMaxBlocks);
+
 	public:
 		fs();
 		~fs();
 
 		// refer to https://man7.org/linux/man-pages/man2/syscalls.2.html for more
-		int my_creat(const string& name, mode_t mode);
+		int my_creat(const string& path, mode_t mode);
 		int my_open(const char *pathname, mode_t mode);
 		bool my_close(int fd);
-		bool my_stat(const string& name, struct stat& buf);
+		bool my_stat(const string& path, struct stat& buf);
 		bool my_fstat(int fd, struct stat& buf);
 		int my_lseek(int fd, off_t offset, int whenence);
 
-		// int my_read(int fd, char* buffer, int nbytes);
-		// int my_write(int fd, const char* buffer, int nbytes);
+		int my_read(int fd, char* buffer, int nbytes);
+		int my_write(int fd, const char* buffer, int nbytes);
 		
-		
-		// TODO, system call
-		// Implement my_creat and my_open to check file mode is correct
-		// Need more study for file mode
-		// What if file is already created?
-		// Test lseek after implement read and write
-		// stat and fstat should print information? or just pass the buffer
-
-		// TODO, commands
-		// How to implement cd? use string currentPath as a private variable in fs class?
-		// lcp, Lcp, ifstream srcFile? need to study
-
+		void my_ls(const string& name);
+		void my_ls();
+		void my_cd(const string& name);
+		int my_mkdir(const string& name, mode_t mode);
+		int my_mkdir(mode_t mode);
+		int my_rmdir(const string& name);
+		int my_chown(const string& name, int owner, int group);
+		int my_cp(const string& srcPath, const string& destPath);
+		int my_mv(const string& srcPath, const string& destPath);
+		int my_rm(const string& name);
+		int my_ln(const string& srcPath, const string& destPath);
+		// int my_cat(const string& name);
+		// int my_Lcp(const string& srcPath, const string& destPath);
+		// bool my_lcp(const string& srcPath, const string& destPath);
 };
 
 #endif

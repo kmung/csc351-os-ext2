@@ -22,9 +22,7 @@ void openDisk(const string& devicePath, fstream& diskFile){
     diskFile.open(devicePath, ios::binary | ios::out);
     if (!diskFile.is_open()) {
         cerr << "Error: Could not open file at " << devicePath << '\n';
-    } else {
-		cout << "Opened file at " << devicePath << '\n';
-	}
+    } 
 }
 
 //******************************************************************************
@@ -100,7 +98,7 @@ void initSuperBlock(fstream& disk) {
 
 //******************************************************************************
 void initInodeBitmap(fstream& disk){
-	bitmap myBitmap(NINODES);
+	Bitmap myBitmap(NINODES);
 
 	// Set the first bit to 1 to indicate that 
 	// the first inode is in use for the root directory inode
@@ -116,7 +114,7 @@ void initInodeBitmap(fstream& disk){
 
 //******************************************************************************
 void initBlockBitmap(fstream& disk){
-	bitmap myBitmap(NDATA_BLOCKS);
+	Bitmap myBitmap(NDATA_BLOCKS);
 
 	// Set the first bit to 1 to indicate that
 	// the first data block is in use for the root directory
@@ -189,7 +187,7 @@ void readSuperBlock(fstream& disk, SuperBlock& sb) {
 }
 
 //******************************************************************************
-void readInodeBitmap(fstream& disk, bitmap& inodeBitmap){
+void readInodeBitmap(fstream& disk, Bitmap& inodeBitmap){
     // Calculate the size of the bitmap in bytes
     int bitmapSize = (NINODES + 7) / 8;
 
@@ -209,7 +207,7 @@ void readInodeBitmap(fstream& disk, bitmap& inodeBitmap){
 }
 
 //******************************************************************************
-void readBlockBitmap(fstream& disk, bitmap& blockBitmap){
+void readBlockBitmap(fstream& disk, Bitmap& blockBitmap){
     // Calculate the size of the bitmap in bytes
     int bitmapSize = (NBLOCKS + 7) / 8;
 
@@ -230,6 +228,8 @@ void readBlockBitmap(fstream& disk, bitmap& blockBitmap){
 
 //******************************************************************************
 void readInode(fstream& disk, int inum, Inode& inode){
+    streampos curPosition = disk.tellg();
+
     // Check if the disk file is open
     if (!disk.is_open()) {
 		cout << "Disk file is not open" << endl;
@@ -258,6 +258,8 @@ void readInode(fstream& disk, int inum, Inode& inode){
 
     // Convert the buffer to an Inode structure
     inode = *reinterpret_cast<Inode*>(buffer);
+
+    disk.seekg(curPosition);
 }
 
 //******************************************************************************

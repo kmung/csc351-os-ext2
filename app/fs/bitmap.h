@@ -6,14 +6,14 @@
 
 using namespace std;
 
-class bitmap {
+class Bitmap {
 	private:
 		int size;
 		std::vector<unsigned char> data; // Store the bitmap data as bytes
 	
 	public:
-        bitmap();
-		bitmap(int size);
+        Bitmap();
+		Bitmap(int size);
 
         void resize(int newSize);
 
@@ -29,6 +29,8 @@ class bitmap {
         // Otherwise, returns false if bit is not set at the given position
         // Or given position is out of range
         bool isBitSet(int pos) const;
+
+        int getSize() const;
 
         // Returns the bitmap data as a string
         string getData() const {
