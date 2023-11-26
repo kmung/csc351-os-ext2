@@ -55,9 +55,13 @@ void init_shell() {
 
     // close the shell when user enters exit
     if (string(buffer) == "exit") {
+      cout << "Exiting..." << endl;
       break;
     }
 
+    cout << "Sending data to server..." << endl;
+    // send the user input to the server
+    // output error if sending fails
     if (send(sock, buffer, strlen(buffer), 0) < 0) {
       cerr << "Error sending data to server!" << endl;
       break;

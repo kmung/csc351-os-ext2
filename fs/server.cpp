@@ -33,12 +33,6 @@ nlohmann::json loadCommands() {
 // call the commands
 // nlohmann::json commands = loadCommands();
 
-// -----------------------------
-
-
-/** Christian's code*/
-
-
 class Path {
     vector<string> disassembled_path;
     bool is_absolute = false;
@@ -277,32 +271,36 @@ int main() {
       break;
     }
 
-    string command = string(buffer);
-    string path = string("/system/user");
+    if (string(buffer) != "") {
+        string command = string(buffer);
+        cout << "Received command: " << command << endl;
+        string path = string("/system/user");
 
-    string finalOutput = "";
-    try {
-        vector<string> command_parsed = parse_command(command, path);
+        string finalOutput = "";
+        try {
+            vector<string> command_parsed = parse_command(command, path);
 
-        if (command_parsed[0] == "ls") {
-          // code goes here
-        } else if (command_parsed[0] == "shutdown"){
-          cout << "Shutting down the server..." << endl;
-          break;
+            if (command_parsed[0] == "ls") {
+            // code goes here
+            } else if (command_parsed[0] == "shutdown"){
+            cout << "Shutting down the server..." << endl;
+            break;
+            }
+
+            for (const auto& i : command_parsed) {
+                finalOutput += i + " -- ";
+            }
+        } catch (const invalid_argument& e) {
+            finalOutput = e.what();
         }
 
-        for (const auto& i : command_parsed) {
-            finalOutput += i + " -- ";
+        cout << finalOutput << "[server-output]" << endl;
+        if (send(client, finalOutput.c_str(), finalOutput.size(), 0) < 0) {
+        cerr << "Couldn't send an output to the client" << endl;
+        break;
         }
-    } catch (const invalid_argument& e) {
-        finalOutput = e.what();
     }
-
-    cout << finalOutput << "[client-output]" << endl;
-    if (send(client, finalOutput.c_str(), finalOutput.size(), 0) < 0) {
-      cerr << "Couldn't send an output to the client" << endl;
-      break;
-    }
+    
   }
 
   // close the client socket
