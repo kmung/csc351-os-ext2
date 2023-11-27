@@ -32,8 +32,8 @@ void initRootdentry(fstream& disk, int inum, int parentInum);
 
 // Read the contents of the disk
 void readSuperBlock(fstream& disk, SuperBlock& sb);
-void readInodeBitmap(fstream& disk, bitmap& inodeBitmap);
-void readBlockBitmap(fstream& disk, bitmap& blockBitmap);
+void readInodeBitmap(fstream& disk, Bitmap& inodeBitmap);
+void readBlockBitmap(fstream& disk, Bitmap& blockBitmap);
 void readInode(fstream& disk, int inum, Inode& inode);
 void readDentry(fstream& disk, std::vector<dentry>& entries, int inum);
 
