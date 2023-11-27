@@ -1084,11 +1084,22 @@ int fs::my_ln(const string& srcPath, const string& destPath){
     return rc;
 }
 
-// //******************************************************************************
-// int fs::my_cat(const string& name){
-//     int rc = -1;
-//     return rc;
-// }
+//******************************************************************************
+int fs::my_cat(const string& srcPath){
+    int rc = -1;
+    int fd = my_open(srcPath.c_str(), S_IRUSR | S_IWUSR);
+
+    if (fd != -1) {
+        struct stat fileStat;
+        if(my_stat(srcPath, fileStat)){
+            my_lseek(fd, 0, SEEK_SET);
+            char buffer[fileStat.st_size];
+            my_read(fd, buffer, fileStat.st_size);
+            my_close(fd);
+        }
+    }
+    return rc;
+}
 
 // //******************************************************************************
 // bool fs::my_lcp(const string& hostFilePath, const string& destPath) {

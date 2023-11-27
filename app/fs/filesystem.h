@@ -83,7 +83,7 @@ class fs {
 		int my_mv(const string& srcPath, const string& destPath);
 		int my_rm(const string& name);
 		int my_ln(const string& srcPath, const string& destPath);
-		// int my_cat(const string& name);
+		int my_cat(const string& srcPath);
 		// int my_Lcp(const string& srcPath, const string& destPath);
 		// bool my_lcp(const string& srcPath, const string& destPath);
 };
