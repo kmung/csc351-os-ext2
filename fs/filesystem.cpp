@@ -18,7 +18,8 @@
 using namespace std;
 
 fs::fs() {
-    string devicePath = "C:/Users/ssyak/Downloads/disk.vhd";
+    // Write your own disk path here
+    string devicePath = "C:/Users/ssyak/Downloads/virtual_disk.vhd";
 
     curPath = "";
     curInum = 0;
@@ -31,9 +32,9 @@ fs::fs() {
     createDisk(devicePath);
 
     // Initialize the disk member variable
-    disk.open(devicePath, std::ios::in | std::ios::out | std::ios::binary);
+    disk.open(devicePath, ios::in | ios::out | ios::binary);
     if (!disk) {
-        cerr << "Failed to open device: " << devicePath << std::endl;
+        cerr << "Failed to open device: " << devicePath << endl;
     }
 
     // Initialize all contents of the disk
@@ -677,7 +678,7 @@ string fs::my_ls(){
             struct stat fileStat;
             if (my_stat(newPath, fileStat)) {
                 string timeStr = ctime(&fileStat.st_mtime);
-                timeStr.erase(std::remove(timeStr.begin(), timeStr.end(), '\n'), timeStr.end());
+                timeStr.erase(remove(timeStr.begin(), timeStr.end(), '\n'), timeStr.end());
 
                 // Print the file details in a format similar to ls -l
                 ss << ((S_ISDIR(fileStat.st_mode)) ? 'd' : '-')
