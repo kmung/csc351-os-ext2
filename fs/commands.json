@@ -88,6 +88,141 @@
           }
       },
       {
+            "name": "cp",
+            "description": "Copy files and directories",
+            "syntax":{ 
+                "command": "cp",
+                "args": [
+                    {
+                        "name": "source",
+                        "description": "The source file to copy",
+                        "type": "path",
+                        "required": true
+                    },
+                    {
+                        "name": "destination",
+                        "description": "The destination file to copy to",
+                        "type": "path",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "name": "mv",
+            "description": "Move or rename files and directories",
+            "syntax": {
+                "command": "mv",
+                "args": [
+                    {
+                        "name": "source",
+                        "description": "The source file to move",
+                        "type": "path",
+                        "required": true
+                    },
+                    {
+                        "name": "destination",
+                        "description": "The destination file to move to",
+                        "type": "path",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "name": "cat",
+            "description": "Print the contents of one or more files on the standard output",
+            "syntax": {
+                "command": "cat",
+                "args": [
+                    {
+                        "name": "file",
+                        "description": "The file to print",
+                        "type": "path",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "name": "rmdir",
+            "description": "Remove empty directories",
+            "syntax": {
+                "command": "rmdir",
+                "args": [
+                    {
+                        "name": "directory",
+                        "description": "The directory to remove",
+                        "type": "path",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "name": "rm",
+            "description": "Remove one or more files",
+            "syntax": {
+                "command": "rm",
+                "args": [
+                    {
+                        "name": "file",
+                        "description": "The file to remove",
+                        "type": "path",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "name": "chown",
+            "description": "Change file owner and group",
+            "syntax": {
+                "command": "chown",
+                "args": [
+                    {
+                        "name": "user",
+                        "description": "The user to change to",
+                        "type": "string",
+                        "required": true
+                    },
+                    {
+                        "name": "group",
+                        "description": "The group to change to",
+                        "type": "string",
+                        "required": true
+                    },
+                    {
+                        "name": "file",
+                        "description": "The file to change",
+                        "type": "path",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "name": "ln",
+            "description": "Create a hard link",
+            "syntax": {
+                "command": "ln",
+                "args": [
+                    {
+                        "name": "source",
+                        "description": "The source file to link",
+                        "type": "path",
+                        "required": true
+                    },
+                    {
+                        "name": "destination",
+                        "description": "The destination file to link to",
+                        "type": "path",
+                        "required": true
+                    }
+                ]
+            }
+        },
+      {
           "name": "shutdown",
           "description": "Shutdown the system",
           "syntax": {

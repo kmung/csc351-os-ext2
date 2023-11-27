@@ -20,7 +20,7 @@ using json = nlohmann::json;
 
 // define port number to listen to
 #define PORT 8080 // port 8080 is common application web server port
-#define MAX_BUFFER_SIZE 1024 // max buffer size for incoming data, server can receive up to 1024 bytes of data at a time from the client
+#define MAX_BUFFER_SIZE 4096 // max buffer size for incoming data, server can receive up to 1024 bytes of data at a time from the client
 
 // function to load commands from commands.json
 nlohmann::json loadCommands() {
@@ -32,12 +32,6 @@ nlohmann::json loadCommands() {
 
 // call the commands
 // nlohmann::json commands = loadCommands();
-
-// -----------------------------
-
-
-/** Christian's code*/
-
 
 class Path {
     vector<string> disassembled_path;
@@ -162,7 +156,7 @@ vector<string> disassemble_command(const string& command){
 }
 
 // TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
-std::ifstream f(R"(/home/ckmung/Documents/csc351/csc351-os-ext2/fs/commands.json)");
+ifstream f(R"(/home/ckmung/Documents/csc351/csc351-os-ext2/fs/commands.json)");
 json COMMAND_TEMPLATE = json::parse(f);
 
 vector<string> parse_command(const string& command, string& cwd){
@@ -276,33 +270,37 @@ int main() {
       cerr << "Error receiving data from client!" << endl;
       break;
     }
+    // if the client sends a non-empty string, process the command
+    if (string(buffer) != "") {
+        string command = string(buffer);
+        cout << "Received command: " << command << endl;
+        string path = string("/system/user");
 
-    string command = string(buffer);
-    string path = string("/system/user");
+        string finalOutput = "";
+        try {
+            vector<string> command_parsed = parse_command(command, path);
 
-    string finalOutput = "";
-    try {
-        vector<string> command_parsed = parse_command(command, path);
+            if (command_parsed[0] == "ls") {
+            // code goes here
+            } else if (command_parsed[0] == "shutdown"){
+            cout << "Shutting down the server..." << endl;
+            break;
+            }
 
-        if (command_parsed[0] == "ls") {
-          // code goes here
-        } else if (command_parsed[0] == "shutdown"){
-          cout << "Shutting down the server..." << endl;
-          break;
+            for (const auto& i : command_parsed) {
+                finalOutput += i + " -- ";
+            }
+        } catch (const invalid_argument& e) {
+            finalOutput = e.what();
         }
 
-        for (const auto& i : command_parsed) {
-            finalOutput += i + " -- ";
+        cout << finalOutput << "[server-output]" << endl;
+        if (send(client, finalOutput.c_str(), finalOutput.size(), 0) < 0) {
+        cerr << "Couldn't send an output to the client" << endl;
+        break;
         }
-    } catch (const invalid_argument& e) {
-        finalOutput = e.what();
     }
-
-    cout << finalOutput << "[client-output]" << endl;
-    if (send(client, finalOutput.c_str(), finalOutput.size(), 0) < 0) {
-      cerr << "Couldn't send an output to the client" << endl;
-      break;
-    }
+    
   }
 
   // close the client socket
