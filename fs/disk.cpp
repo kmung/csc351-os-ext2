@@ -30,7 +30,7 @@ int createDisk(const string& devicePath){
 	int rc = -1;
 
 	// 2GB memory size
-	const int memory_size = 2ULL * 1024 * 1024 * 1024;
+	const uint32_t memory_size = 2ULL * 1024 * 1024 * 1024;
 
 	// 4KB block size
 	const size_t block_size = 4 * 1024;
@@ -41,6 +41,7 @@ int createDisk(const string& devicePath){
     // Open the file
 	fstream disk;
     openDisk(devicePath, disk);
+    // fstream disk("C:/Users/ssyak/Downloads/virtual_disk.vhd", ios::binary | ios::out);
 
 	// Initialize super block
 	initSuperBlock(disk);
@@ -287,4 +288,5 @@ void readDentry(fstream& disk, vector<dentry>& entries, int inum){
     }
 
 }
+
 
