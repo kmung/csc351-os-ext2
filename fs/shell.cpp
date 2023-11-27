@@ -27,6 +27,7 @@ void init_shell() {
   clearShell();
   cout << "\n\n\n\n\t********************************************" << endl;
   cout << "\n\n\t*****The Creative Awesome Shell - Crash*****" << endl;
+  cout << "\n\n\t*****Proceed with caution...*****" << endl;
   cout << "\n\n\t********************************************\n\n" << endl;
 }
 
@@ -88,11 +89,17 @@ int main(int argc, char **argv) {
   init_shell();
 
   // sock is client
- int sock = socket(AF_INET, SOCK_STREAM, 0);
- if (sock < 0) {
-   cerr << "Error: Cannot create client socket." << endl;
-   return EXIT_FAILURE;
- }
+  int sock = socket(AF_INET, SOCK_STREAM, 0);
+  if (sock < 0) {
+    cerr << "Error: Cannot create client socket." << endl;
+    return EXIT_FAILURE;
+  }
+
+  int enable = 1;
+  if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+    cerr << "Error: setsockopt(SO_REUSEADDR) failed" << endl;
+    return EXIT_FAILURE;
+  }
 
   // incoming server details
   struct sockaddr_in serverAddress;

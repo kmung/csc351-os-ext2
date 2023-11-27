@@ -55,7 +55,7 @@ int createDisk(const string& devicePath){
 
 	// Check for write errors
 	if (!disk) {
-		std::cerr << "Error: Could not write to file at " << devicePath << '\n';
+		cerr << "Error: Could not write to file at " << devicePath << '\n';
 		rc = -1;
 	} else {
 		rc = 0;

@@ -252,59 +252,69 @@ int main() {
     return EXIT_FAILURE;
   }
 
-  // accept incoming connections
-  struct sockaddr_in clientAddress;
-  socklen_t clientAddrLen = sizeof(clientAddress);
-  int client = accept(server, (struct sockaddr*)&clientAddress, &clientAddrLen);
-  if (client < 0) {
-    cerr << "Error accepting connection!" << endl;
-    return EXIT_FAILURE;
-  }
+  // shutdown flag
+  bool shutdown = false;
 
-  // receive data from the client
-  char buffer[MAX_BUFFER_SIZE];
-  
   while (true) {
-    memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
-    if (recv(client, buffer, MAX_BUFFER_SIZE, 0) < 0) {
-      cerr << "Error receiving data from client!" << endl;
-      break;
+    // accept incoming connections
+    struct sockaddr_in clientAddress;
+    socklen_t clientAddrLen = sizeof(clientAddress);
+    int client = accept(server, (struct sockaddr*)&clientAddress, &clientAddrLen);
+    if (client < 0) {
+        cerr << "Error accepting connection!" << endl;
+        continue;
     }
-    // if the client sends a non-empty string, process the command
-    if (string(buffer) != "") {
-        string command = string(buffer);
-        cout << "Received command: " << command << endl;
-        string path = string("/system/user");
 
-        string finalOutput = "";
-        try {
-            vector<string> command_parsed = parse_command(command, path);
-
-            if (command_parsed[0] == "ls") {
-            // code goes here
-            } else if (command_parsed[0] == "shutdown"){
-            cout << "Shutting down the server..." << endl;
-            break;
-            }
-
-            for (const auto& i : command_parsed) {
-                finalOutput += i + " -- ";
-            }
-        } catch (const invalid_argument& e) {
-            finalOutput = e.what();
-        }
-
-        cout << finalOutput << "[server-output]" << endl;
-        if (send(client, finalOutput.c_str(), finalOutput.size(), 0) < 0) {
-        cerr << "Couldn't send an output to the client" << endl;
+    // receive data from the client
+    char buffer[MAX_BUFFER_SIZE];
+    
+    while (true) {
+        memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
+        if (recv(client, buffer, MAX_BUFFER_SIZE, 0) < 0) {
+        cerr << "Error receiving data from client!" << endl;
         break;
         }
+        // if the client sends a non-empty string, process the command
+        if (string(buffer) != "") {
+            string command = string(buffer);
+            cout << "Received command: " << command << endl;
+            string path = string("/system/user");
+
+            string finalOutput = "";
+            try {
+                vector<string> command_parsed = parse_command(command, path);
+
+                if (command_parsed[0] == "ls") {
+                // code goes here
+                } else if (command_parsed[0] == "shutdown"){
+                cout << "Shutting down the server..." << endl;
+                shutdown = true; // set the shutdown flag to true
+                break;
+                }
+
+                for (const auto& i : command_parsed) {
+                    finalOutput += i + " -- ";
+                }
+            } catch (const invalid_argument& e) {
+                finalOutput = e.what();
+            }
+
+            cout << finalOutput << "[server-output]" << endl;
+            if (send(client, finalOutput.c_str(), finalOutput.size(), 0) < 0) {
+            cerr << "Couldn't send an output to the client" << endl;
+            break;
+            }
+        }  
     }
-    
+    // close the client socket
+    close(client);
+
+    // break the loop if the shutdown flag is set to true
+    if (shutdown) {
+      break;
+    }
   }
 
-  // close the client socket
-  close(client);
   // close the server socket
   close(server);
   
