@@ -20,7 +20,7 @@ using json = nlohmann::json;
 
 // define port number to listen to
 #define PORT 8080 // port 8080 is common application web server port
-#define MAX_BUFFER_SIZE 1024 // max buffer size for incoming data, server can receive up to 1024 bytes of data at a time from the client
+#define MAX_BUFFER_SIZE 4096 // max buffer size for incoming data, server can receive up to 1024 bytes of data at a time from the client
 
 // function to load commands from commands.json
 nlohmann::json loadCommands() {
@@ -270,7 +270,7 @@ int main() {
       cerr << "Error receiving data from client!" << endl;
       break;
     }
-
+    // if the client sends a non-empty string, process the command
     if (string(buffer) != "") {
         string command = string(buffer);
         cout << "Received command: " << command << endl;

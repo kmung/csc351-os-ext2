@@ -15,7 +15,7 @@
 using namespace std;
 
 #define SERVER_PORT 8080
-#define MAX_BUFFER_SIZE 1024
+#define MAX_BUFFER_SIZE 4096
 
 // clearing the shell using escape sequences
 void clearShell() {
