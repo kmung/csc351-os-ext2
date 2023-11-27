@@ -39,9 +39,14 @@ int createDisk(const string& devicePath){
 	size_t num_blocks = memory_size / block_size;
 
     // Open the file
-	fstream disk;
-    openDisk(devicePath, disk);
-    // fstream disk("C:/Users/ssyak/Downloads/virtual_disk.vhd", ios::binary | ios::out);
+	// fstream disk;
+    // openDisk(devicePath, disk);
+    fstream disk(devicePath, ios::in | ios::out);
+    if (!disk.is_open()) {
+        disk.open(devicePath, ios::out);
+        disk.close();
+        disk.open(devicePath, ios::in | ios::out);
+    }
 
 	// Initialize super block
 	initSuperBlock(disk);
@@ -56,7 +61,7 @@ int createDisk(const string& devicePath){
 
 	// Check for write errors
 	if (!disk) {
-		std::cerr << "Error: Could not write to file at " << devicePath << '\n';
+		cerr << "Error: Could not write to file at " << devicePath << '\n';
 		rc = -1;
 	} else {
 		rc = 0;
