@@ -41,6 +41,7 @@ int createDisk(const string& devicePath){
     // Open the file
 	fstream disk;
     openDisk(devicePath, disk);
+    // fstream disk("C:/Users/ssyak/Downloads/virtual_disk.vhd", ios::binary | ios::out);
 
 	// Initialize super block
 	initSuperBlock(disk);
@@ -287,4 +288,5 @@ void readDentry(fstream& disk, vector<dentry>& entries, int inum){
     }
 
 }
+
 

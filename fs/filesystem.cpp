@@ -10,7 +10,6 @@
 #include <sstream>
 #include <fcntl.h>
 #include <algorithm>
-
 #include "filesystem.h"
 #include "disk.h"
 #include "superblock.h"
@@ -270,9 +269,6 @@ int fs::allocateMem(int allocateSize, int inum, int& curMaxBlocks) {
                 }
                 // Return the starting index of the consecutive free blocks
                 rc = (i + FIRST_DATA_BLOCK - 1) * 4096;
-            }
-
-            if(rc){
                 break;
             }
         }
@@ -287,16 +283,19 @@ int fs::allocateMem(int allocateSize, int inum, int& curMaxBlocks) {
 int fs::my_creat(const string& fileName, mode_t mode) {
     // Check if the disk file is open
     if (!disk.is_open()) {
+        cout << "Disk file is not open" << endl;
         throw runtime_error("Disk file is not open");
     }
 
     // Check if the file name is empty
     if (fileName.empty()) {
+        cout << "File name is empty" << endl;
         throw runtime_error("File name is empty");
     }
 
     // Check if the file already exists
     if (my_open(fileName.c_str(), mode) != -1) {
+        cout << "File already exists: " << fileName << endl;
         throw runtime_error("File already exists: " + fileName);
     }
 
@@ -560,22 +559,24 @@ int fs::my_read(int fd, char* buffer, int nbytes) {
             if (node.mode & S_IRUSR){
                 // Check if current position is on the right spot
                 // As blockAddress point is the index of dentry, add 1 and times BLOCK_SIZE to it
-                if(dataAddress * BLOCK_SIZE <= curPosition && (dataAddress * BLOCK_SIZE + node.size) > curPosition){
+                if(dataAddress * BLOCK_SIZE <= curPosition && (dataAddress * BLOCK_SIZE + node.size) >= curPosition){
                     // If remain bytes to read is less than nbytes, read the remaining bytes
                     // Otherwise, read nbytes
+
                     if(nbytes > node.size + dataAddress * BLOCK_SIZE - curPosition){
                         rc = node.size + dataAddress * BLOCK_SIZE - curPosition;
                     } else {
                         rc = nbytes;
                     }
 
+                    // Move the file pointer to the start of the file data
+                    disk.seekg(dataAddress * BLOCK_SIZE, ios::beg);
+
                     // As reading starts from current position, do not move pointer
                     disk.read(buffer, rc);
 
                     // Null-terminate the buffer
                     buffer[rc] = '\0';
-
-                    cout << buffer << endl;
 
                     if(disk.fail()){
                         if (disk.eof()) {
@@ -633,14 +634,14 @@ int fs::my_write(int fd, const char* buffer, int nbytes){
                     disk.seekp(curWritePosition, ios_base::beg);
                     disk.write(buffer, nbytes);
 
-                    // Update inode
-                    int overWriteSize;
-                    if((rc + BLOCK_SIZE + node.size - curWritePosition) > nbytes){
-                        overWriteSize = nbytes;
-                    } else {
-                        overWriteSize = rc + BLOCK_SIZE + node.size - curWritePosition;
-                    }
-                    node.size += nbytes - overWriteSize;
+                    // // Update inode
+                    // int overWriteSize;
+                    // if((rc + BLOCK_SIZE + node.size - curWritePosition) > nbytes){
+                    //     overWriteSize = nbytes;
+                    // } else {
+                    //     overWriteSize = rc + BLOCK_SIZE + node.size - curWritePosition;
+                    // }
+                    node.size += nbytes;
                     node.blockAddress = rc / 4096;
                     writeInode(disk, fd, node);
 
@@ -664,7 +665,9 @@ int fs::my_write(int fd, const char* buffer, int nbytes){
 }
 
 //******************************************************************************
-void fs::my_ls(){
+string fs::my_ls(){
+    stringstream ss;
+
     vector<dentry> entries;
     readDentry(disk, entries, curInum);
 
@@ -677,7 +680,7 @@ void fs::my_ls(){
                 timeStr.erase(std::remove(timeStr.begin(), timeStr.end(), '\n'), timeStr.end());
 
                 // Print the file details in a format similar to ls -l
-                cout << ((S_ISDIR(fileStat.st_mode)) ? 'd' : '-')
+                ss << ((S_ISDIR(fileStat.st_mode)) ? 'd' : '-')
                     << ((fileStat.st_mode & S_IRUSR) ? 'r' : '-')
                     << ((fileStat.st_mode & S_IWUSR) ? 'w' : '-')
                     << ((fileStat.st_mode & S_IXUSR) ? 'x' : '-')
@@ -698,10 +701,14 @@ void fs::my_ls(){
             }
         }
     }
+
+    return ss.str();
 }
 
 //******************************************************************************
-void fs::my_ls(const string& path){
+string fs::my_ls(const string& path){
+    stringstream ss;
+
     string pathStr = path;
     size_t pos = pathStr.find_last_of("\\");
     string filename = pathStr.substr(pos + 1);
@@ -727,10 +734,10 @@ void fs::my_ls(const string& path){
             struct stat fileStat;
             if (my_stat(newPath, fileStat)) {
                 string timeStr = ctime(&fileStat.st_mtime);
-                timeStr.erase(std::remove(timeStr.begin(), timeStr.end(), '\n'), timeStr.end());
+                timeStr.erase(remove(timeStr.begin(), timeStr.end(), '\n'), timeStr.end());
 
                 // Print the file details in a format similar to ls -l
-                cout << ((S_ISDIR(fileStat.st_mode)) ? 'd' : '-')
+                ss << ((S_ISDIR(fileStat.st_mode)) ? 'd' : '-')
                     << ((fileStat.st_mode & S_IRUSR) ? 'r' : '-')
                     << ((fileStat.st_mode & S_IWUSR) ? 'w' : '-')
                     << ((fileStat.st_mode & S_IXUSR) ? 'x' : '-')
@@ -752,10 +759,14 @@ void fs::my_ls(const string& path){
         }
     }
 
+    return ss.str();
+
 }
 
 //******************************************************************************
-void fs::my_cd(const string& name){
+string fs::my_cd(const string& name){
+    stringstream ss;
+
     // Parse and save given file name(file path)
     istringstream iss(name);
     string token;
@@ -780,7 +791,9 @@ void fs::my_cd(const string& name){
         }
     }
 
-    cout << "Current path: " << curPath << endl;
+    ss << curPath << endl;
+
+    return ss.str();
 
 }
 
@@ -797,7 +810,7 @@ int fs::my_mkdir(mode_t mode) {
 //******************************************************************************
 int fs::my_rmdir(const string& path){
     int rc = -1;
-    
+
     string pathStr = path;
     size_t pos = pathStr.find_last_of("\\");
     string filename = pathStr.substr(pos + 1);
@@ -806,7 +819,7 @@ int fs::my_rmdir(const string& path){
     int inum = -1;
     vector<dentry> parentDentry;
     findParent(disk, path, parentDentry, parentInum);
-
+    
     // Check if the file exists in the parent directory
     for (int i = 0; i < parentDentry[0].nEntries; i++) {
         if (parentDentry[i].fname == filename) {
@@ -937,6 +950,10 @@ int fs::my_cp(const string& srcPath, const string& destPath){
 int fs::my_mv(const string& srcPath, const string& destPath){
     int rc = my_cp(srcPath, destPath);
 
+    string pathStr = srcPath;
+    size_t pos = pathStr.find_last_of("\\");
+    string filename = pathStr.substr(pos + 1);
+
     // Find the source file's parent directory and its dentry
     vector<dentry> srcParentDentries;
     int srcParentInum;
@@ -945,7 +962,7 @@ int fs::my_mv(const string& srcPath, const string& destPath){
     // Find the dentry for the source file and remove it
     int indexToRemove = -1;
     for (int i = 0; i < srcParentDentries[0].nEntries; ++i) {
-        if (srcParentDentries[i].fname == srcPath) {
+        if (srcParentDentries[i].fname == filename) {
             indexToRemove = i;
             break;
         }
@@ -953,6 +970,7 @@ int fs::my_mv(const string& srcPath, const string& destPath){
 
     if (indexToRemove != -1) {
         srcParentDentries.erase(srcParentDentries.begin() + indexToRemove);
+        srcParentDentries[0].nEntries--;
     }
 
     // Write the modified dentries back to the disk
@@ -989,7 +1007,7 @@ int fs::my_rm(const string& name){
         readInode(disk, inum, inode);
 
         // Check if the file is a file
-        if (inode.mode & S_IFREG) {
+        if (inode.mode) {
             // Check if the directory is empty
             vector<dentry> entries;
             readDentry(disk, entries, inum);
@@ -1084,44 +1102,117 @@ int fs::my_ln(const string& srcPath, const string& destPath){
     return rc;
 }
 
-// //******************************************************************************
-// int fs::my_cat(const string& name){
-//     int rc = -1;
-//     return rc;
-// }
+//******************************************************************************
+string fs::my_cat(const string& srcPath){
+    stringstream ss;
 
-// //******************************************************************************
-// bool fs::my_lcp(const string& hostFilePath, const string& destPath) {
-//     bool rc = true;
-//     // Open the file from the host
-//     ifstream hostFile(hostFilePath, ios::binary);
-//     if (!hostFile) {
-//         cout << "Failed to open source file" << endl;
-//         rc = false;
-//     }
+    int fd = my_open(srcPath.c_str(), S_IRUSR | S_IWUSR);
 
-//     // Create the destination file
-//     if(rc){
-//         int fd = my_creat(destPath, S_IRUSR | S_IWUSR);
-//         if (fd < 0) {
-//             cout << "Failed to create destination file" << endl;
-//             rc = false;
-//         }
-//         if(rc){
-//             // Copy the data
-//             char buffer[BLOCK_SIZE];
-//             while (hostFile.read(buffer, BLOCK_SIZE)) {
-//                 if (my_write(fd, buffer, hostFile.gcount()) < 0) {
-//                     cout << "Failed to write to destination file" << endl;
-//                     rc = false;
-//                 } else {
-//                     my_close(fd);
-//                 }
-//             }
-//         }
-//     }
+    if (fd != -1) {
+        struct stat fileStat;
+        if(my_stat(srcPath, fileStat)){
+            my_lseek(fd, 0, SEEK_SET);
+            // char buffer[fileStat.st_size];
+            // my_read(fd, buffer, fileStat.st_size);
+            // my_close(fd);
+            // ss << buffer << endl;
+            char* buffer = new char[fileStat.st_size + 1];  // Allocate one extra byte for the null terminator
+            my_read(fd, buffer, fileStat.st_size);
+            buffer[fileStat.st_size] = '\0';  // Null-terminate the buffer
+            my_close(fd);
+            ss << buffer << endl;
+            delete[] buffer;  // Don't forget to delete the buffer when you're done with it
+        }
+    }
 
-//     hostFile.close();
+    return ss.str();
+}
 
-//     return true;
-// }
+//******************************************************************************
+int fs::my_lcp(const string& srcPath, const string& destPath) {
+    // Open the source file on the local filesystem
+    ifstream srcFile(srcPath, ios::binary);
+    if (!srcFile) {
+        cout << "Failed to open source file" << endl;
+        return -1;
+    }
+    // Get the size of the source file
+    srcFile.seekg(0, ios::end);
+    int size = srcFile.tellg();
+    srcFile.seekg(0, ios::beg);
+
+    // Read the source file into a buffer
+    vector<char> buffer(size);
+    if (!srcFile.read(buffer.data(), size)) {
+        cout << "Failed to read source file" << endl;
+        return -1;
+    }
+    // Close the source file
+    srcFile.close();
+
+    // Open the destination file on the custom filesystem
+    int fd = my_creat(destPath.c_str(), S_IRUSR | S_IWUSR);
+    if (fd == -1) {
+        cout << "Failed to open destination file" << endl;
+        return -1;
+    }
+    
+    // Seek to the end of the destination file
+    my_lseek(fd, 0, SEEK_SET);
+
+    // Write the buffer to the destination file
+    my_write(fd, buffer.data(), size);
+
+    // Close the destination file
+    my_close(fd);
+
+    return 0;
+}
+
+//******************************************************************************
+int fs::my_Lcp(const string& srcPath, const string& destPath) {
+    // Open the source file on the custom filesystem
+    int fd = my_open(srcPath.c_str(), S_IRUSR);
+    if (fd == -1) {
+        cout << "Failed to open source file" << endl;
+        return -1;
+    }
+
+    // Get the size of the source file
+    readInode(disk, fd, inode);
+    int size = inode.size;
+
+    // Read the source file into a buffer
+    my_lseek(fd, 0, SEEK_SET);
+    vector<char> buffer(size);
+    my_read(fd, buffer.data(), size);
+
+    // Close the source file
+    my_close(fd);
+
+    // Check if the destination file exists on the host filesystem
+    ifstream testFile(destPath);
+    if (testFile.good()) {
+        cout << "Destination file already exists" << endl;
+        return -1;
+    }
+    testFile.close();
+
+    // Create a new file on the host filesystem
+    ofstream destFile(destPath, ios::binary);
+    if (!destFile) {
+        cout << "Failed to create destination file" << endl;
+        return -1;
+    }
+
+    // Write the buffer to the new file
+    if (!destFile.write(buffer.data(), size)) {
+        cout << "Failed to write to destination file" << endl;
+        return -1;
+    }
+
+    // Close the destination file
+    destFile.close();
+
+    return 0;
+}

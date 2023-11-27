@@ -1,9 +1,13 @@
 # executable
 shell
 server
+*.exe
 
 # stuff
 .vscode
 
 # object files
 fs/*.o
+
+#vhd
+*.vhd
