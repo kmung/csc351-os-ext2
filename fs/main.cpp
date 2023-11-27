@@ -22,18 +22,18 @@ int main(int argc, char **argv) {
     // Create a new file
     fd = filesystem.my_creat("testdir", 0644);
     if (fd == -1) {
-        std::cerr << "Failed to create file\n";
+        cerr << "Failed to create file\n";
         return 1;
     } else {
-        std::cout << "File created with fd " << fd << '\n' << endl;
+        cout << "File created with fd " << fd << '\n' << endl;
     }
 
     fd = filesystem.my_creat("testdir\\test.txt", 0644);
     if (fd == -1) {
-        std::cerr << "Failed to create file\n";
+        cerr << "Failed to create file\n";
         return 1;
     } else {
-        std::cout << "File created with fd " << fd << '\n' << endl;
+        cout << "File created with fd " << fd << '\n' << endl;
     }
 
     return 0;
