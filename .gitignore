@@ -6,4 +6,8 @@ server
 .vscode
 
 # object files
-*.o
+bitmap.o
+disk.o
+main.o
+shell.o
+server.o
