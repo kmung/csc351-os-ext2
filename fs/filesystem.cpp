@@ -10,10 +10,9 @@
 #include <sstream>
 #include <fcntl.h>
 #include <algorithm>
-
 #include "filesystem.h"
 #include "disk.h"
-#include "SuperBlock.h"
+#include "superblock.h"
 #include "bitmap.h"
 
 using namespace std;
