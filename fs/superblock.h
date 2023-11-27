@@ -33,19 +33,21 @@ using namespace std;
 #define FIRST_INODE 18
 #define FIRST_DATA_BLOCK 1042
 
+#define MAX_OPEN_FILES 1024 * 4096 / 128
+
 
 // Super block locates on the first block of the memory
 // It contains the entire information of file system
 // Although the size of superblock is 1KB, it still use the entire space of first block
 struct SuperBlock {
 
-		uint64_t memory_size = MEMORY_SIZE;
-		uint64_t block_size = BLOCK_SIZE;
-		uint64_t nBlocks = MEMORY_SIZE / BLOCK_SIZE;
-		uint64_t inode_size = INODE_SIZE;
-		uint64_t nInodeBlocks = NINODE_BLOCKS;
-		uint64_t nInodes = BLOCK_SIZE * NINODE_BLOCKS / INODE_SIZE;
-		uint64_t first_data_block = NINODE_BLOCKS + 1;
+		int memory_size = MEMORY_SIZE;
+		int block_size = BLOCK_SIZE;
+		int nBlocks = MEMORY_SIZE / BLOCK_SIZE;
+		int inode_size = INODE_SIZE;
+		int nInodeBlocks = NINODE_BLOCKS;
+		int nInodes = BLOCK_SIZE * NINODE_BLOCKS / INODE_SIZE;
+		int first_data_block = NINODE_BLOCKS + 1;
 
 };
 

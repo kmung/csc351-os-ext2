@@ -30,7 +30,7 @@ int createDisk(const string& devicePath){
 	int rc = -1;
 
 	// 2GB memory size
-	const uint32_t memory_size = 2ULL * 1024 * 1024 * 1024;
+	const int memory_size = 2ULL * 1024 * 1024 * 1024;
 
 	// 4KB block size
 	const size_t block_size = 4 * 1024;
