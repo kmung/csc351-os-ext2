@@ -22,9 +22,7 @@ void openDisk(const string& devicePath, fstream& diskFile){
     diskFile.open(devicePath, ios::binary | ios::out);
     if (!diskFile.is_open()) {
         cerr << "Error: Could not open file at " << devicePath << '\n';
-    } else {
-		cout << "Opened file at " << devicePath << '\n';
-	}
+    } 
 }
 
 //******************************************************************************
@@ -41,8 +39,14 @@ int createDisk(const string& devicePath){
 	size_t num_blocks = memory_size / block_size;
 
     // Open the file
-	fstream disk;
-    openDisk(devicePath, disk);
+	// fstream disk;
+    // openDisk(devicePath, disk);
+    fstream disk(devicePath, ios::in | ios::out);
+    if (!disk.is_open()) {
+        disk.open(devicePath, ios::out);
+        disk.close();
+        disk.open(devicePath, ios::in | ios::out);
+    }
 
 	// Initialize super block
 	initSuperBlock(disk);
@@ -50,14 +54,16 @@ int createDisk(const string& devicePath){
 	// Initialize all bytes to 0
 	char block[block_size] = {0}; 
 
+    cout << num_blocks << " " << block_size << endl;
+    cout << memory_size << endl;
 	// Start from 1, as 0 is used by superblock
 	for (size_t i = 1; i < num_blocks; ++i) { 
 		disk.write(block, block_size);
 	}
-
+    
 	// Check for write errors
 	if (!disk) {
-		std::cerr << "Error: Could not write to file at " << devicePath << '\n';
+		cerr << "Error: Could not write to file at " << devicePath << '\n';
 		rc = -1;
 	} else {
 		rc = 0;
@@ -100,7 +106,7 @@ void initSuperBlock(fstream& disk) {
 
 //******************************************************************************
 void initInodeBitmap(fstream& disk){
-	bitmap myBitmap(NINODES);
+	Bitmap myBitmap(NINODES);
 
 	// Set the first bit to 1 to indicate that 
 	// the first inode is in use for the root directory inode
@@ -116,7 +122,7 @@ void initInodeBitmap(fstream& disk){
 
 //******************************************************************************
 void initBlockBitmap(fstream& disk){
-	bitmap myBitmap(NDATA_BLOCKS);
+	Bitmap myBitmap(NDATA_BLOCKS);
 
 	// Set the first bit to 1 to indicate that
 	// the first data block is in use for the root directory
@@ -159,7 +165,7 @@ void initRootdentry(fstream& disk, int inum, int parentInum) {
     dentry rootDentry;
     rootDentry.inode = inum; 
 	// Set entry name to "."
-    strcpy(rootDentry.fname, ".");
+    strcpy(rootDentry.fname, "itself");
 	// Set the number of entries to 2 as we have "." and ".."
     rootDentry.nEntries = 2;
 
@@ -170,7 +176,7 @@ void initRootdentry(fstream& disk, int inum, int parentInum) {
     // Initialize the parent directory inode
     dentry parentDentry;
     parentDentry.inode = parentInum; 
-    strncpy(parentDentry.fname, "..", MAX_NAME_LEN);
+    strncpy(parentDentry.fname, "parent", MAX_NAME_LEN);
 	parentDentry.nEntries = 2;
 
     // Write the parent directory entry to the disk
@@ -189,7 +195,7 @@ void readSuperBlock(fstream& disk, SuperBlock& sb) {
 }
 
 //******************************************************************************
-void readInodeBitmap(fstream& disk, bitmap& inodeBitmap){
+void readInodeBitmap(fstream& disk, Bitmap& inodeBitmap){
     // Calculate the size of the bitmap in bytes
     int bitmapSize = (NINODES + 7) / 8;
 
@@ -209,7 +215,7 @@ void readInodeBitmap(fstream& disk, bitmap& inodeBitmap){
 }
 
 //******************************************************************************
-void readBlockBitmap(fstream& disk, bitmap& blockBitmap){
+void readBlockBitmap(fstream& disk, Bitmap& blockBitmap){
     // Calculate the size of the bitmap in bytes
     int bitmapSize = (NBLOCKS + 7) / 8;
 
@@ -230,6 +236,8 @@ void readBlockBitmap(fstream& disk, bitmap& blockBitmap){
 
 //******************************************************************************
 void readInode(fstream& disk, int inum, Inode& inode){
+    streampos curPosition = disk.tellg();
+
     // Check if the disk file is open
     if (!disk.is_open()) {
 		cout << "Disk file is not open" << endl;
@@ -258,6 +266,8 @@ void readInode(fstream& disk, int inum, Inode& inode){
 
     // Convert the buffer to an Inode structure
     inode = *reinterpret_cast<Inode*>(buffer);
+
+    disk.seekg(curPosition);
 }
 
 //******************************************************************************

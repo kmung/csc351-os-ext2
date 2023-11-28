@@ -1,4 +1,15 @@
 # executable
+*.exe
+
+# vscode settings
+.vscode
+
+# object files
+fs/*.o
+
+#virtual hard disk
+*.vhd
+
+#builds
 shell
 server
-

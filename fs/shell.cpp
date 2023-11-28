@@ -15,7 +15,7 @@
 using namespace std;
 
 #define SERVER_PORT 8080
-#define MAX_BUFFER_SIZE 1024
+#define MAX_BUFFER_SIZE 4096
 
 // clearing the shell using escape sequences
 void clearShell() {
@@ -27,13 +27,15 @@ void init_shell() {
   clearShell();
   cout << "\n\n\n\n\t********************************************" << endl;
   cout << "\n\n\t*****The Creative Awesome Shell - Crash*****" << endl;
+  cout << "\n\n\t*****Proceed with caution...*****" << endl;
   cout << "\n\n\t********************************************\n\n" << endl;
 }
+
 
   /*
   TODO: write a REPL : Read-Eval-Print-Loop
   */
- void repl(int sock) {
+void repl(int sock) {
   char buffer[MAX_BUFFER_SIZE];
   char cwd[MAX_BUFFER_SIZE]; // to store the current working directory
   //string input;
@@ -54,10 +56,14 @@ void init_shell() {
     cin.getline(buffer, MAX_BUFFER_SIZE);
 
     // close the shell when user enters exit
-    if (string(buffer) == "end") {
+    if (string(buffer) == "exit") {
+      cout << "Exiting..." << endl;
       break;
     }
 
+    cout << "Sending data to server..." << endl;
+    // send the user input to the server
+    // output error if sending fails
     if (send(sock, buffer, strlen(buffer), 0) < 0) {
       cerr << "Error sending data to server!" << endl;
       break;
@@ -84,11 +90,17 @@ int main(int argc, char **argv) {
   init_shell();
 
   // sock is client
- int sock = socket(AF_INET, SOCK_STREAM, 0);
- if (sock < 0) {
-   cerr << "Error: Cannot create client socket." << endl;
-   return EXIT_FAILURE;
- }
+  int sock = socket(AF_INET, SOCK_STREAM, 0);
+  if (sock < 0) {
+    cerr << "Error: Cannot create client socket." << endl;
+    return EXIT_FAILURE;
+  }
+
+  int enable = 1;
+  if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+    cerr << "Error: setsockopt(SO_REUSEADDR) failed" << endl;
+    return EXIT_FAILURE;
+  }
 
   // incoming server details
   struct sockaddr_in serverAddress;

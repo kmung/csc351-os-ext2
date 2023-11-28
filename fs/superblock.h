@@ -7,6 +7,7 @@
 #include <iostream>
 #include <time.h>
 #include <vector>
+#include <cstdint>
 
 using namespace std;
 
@@ -32,6 +33,8 @@ using namespace std;
 #define FIRST_DATA_BITMAP 2
 #define FIRST_INODE 18
 #define FIRST_DATA_BLOCK 1042
+
+#define MAX_OPEN_FILES 1024 * 4096 / 128
 
 
 // Super block locates on the first block of the memory
