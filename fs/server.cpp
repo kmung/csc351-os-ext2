@@ -20,7 +20,7 @@ using json = nlohmann::json;
 
 // define port number to listen to
 #define PORT 8080 // port 8080 is common application web server port
-#define MAX_BUFFER_SIZE 4096 // max buffer size for incoming data, server can receive up to 1024 bytes of data at a time from the client
+#define MAX_BUFFER_SIZE 4096 // max buffer size for incoming data
 
 // function to load commands from commands.json
 nlohmann::json loadCommands() {
@@ -128,7 +128,7 @@ public:
 
 
 string del_spaces(string str){
-    str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+    str.erase(remove(str.begin(), str.end(), ' '), str.end());
     return str;
 }
 
