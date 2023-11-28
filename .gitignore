@@ -1,13 +1,15 @@
 # executable
-shell
-server
 *.exe
 
-# stuff
+# vscode settings
 .vscode
 
 # object files
 fs/*.o
 
-#vhd
+#virtual hard disk
 *.vhd
+
+#builds
+shell
+server
