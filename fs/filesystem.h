@@ -52,7 +52,7 @@ class fs {
 		int allocateMem(int allocateSize, int inum, int& curMaxBlocks);
 
 	public:
-		fs();
+		fs(string vhd_path);
 		~fs();
 
 		// refer to https://man7.org/linux/man-pages/man2/syscalls.2.html for more

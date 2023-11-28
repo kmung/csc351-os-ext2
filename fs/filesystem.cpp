@@ -17,9 +17,9 @@
 
 using namespace std;
 
-fs::fs() {
+fs::fs(string vhd_path) {
     // Write your own disk path here
-    string devicePath = "/home/ckmung/Documents/csc351/virtual_disk.vhd";
+    string devicePath = vhd_path;
 
     curPath = "";
     curInum = 0;

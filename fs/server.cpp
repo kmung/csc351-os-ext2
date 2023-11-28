@@ -14,6 +14,7 @@
 #include "libraries/json_fwd.hpp"
 #include <fstream>
 #include <sstream>
+#include "filesystem.h"
 
 using namespace std;
 using json = nlohmann::json;
@@ -267,6 +268,8 @@ int main() {
 
     // receive data from the client
     char buffer[MAX_BUFFER_SIZE];
+
+    fs filesystem("virtual_disk.vhd");
     
     while (true) {
         memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
@@ -285,11 +288,41 @@ int main() {
                 vector<string> command_parsed = parse_command(command, path);
 
                 if (command_parsed[0] == "ls") {
-                // code goes here
+                    // code goes here
+                    if (command_parsed.size() == 1) {
+                        finalOutput = filesystem.my_ls();
+                    } else {
+                        finalOutput = filesystem.my_ls(command_parsed[1]);
+                    }
+
+                } else if (command_parsed[0] == "cd") {
+                    filesystem.my_cd(command_parsed[1]);
+                }else if (command_parsed[0] == "mkdir"){
+                    filesystem.my_mkdir(command_parsed[1], NULL);
+                }else if (command_parsed[0] == "Lcp"){
+                    filesystem.my_Lcp(command_parsed[1], command_parsed[2]);
+                }else if (command_parsed[0] == "lcp"){
+                    filesystem.my_lcp(command_parsed[1], command_parsed[2]);
+                }else if (command_parsed[0] == "rm"){
+                    filesystem.my_rm(command_parsed[1]);
+                }else if (command_parsed[0] == "rmdir"){
+                    filesystem.my_rmdir(command_parsed[1]);
+                }else if (command_parsed[0] == "chown"){
+                    filesystem.my_chown(command_parsed[1], stoi(command_parsed[2]), stoi(command_parsed[3]));
+                }else if (command_parsed[0] == "cp"){
+                    filesystem.my_cp(command_parsed[1], command_parsed[2]);
+                }else if (command_parsed[0] == "mv"){
+                    filesystem.my_mv(command_parsed[1], command_parsed[2]);
+                }else if (command_parsed[0] == "cat"){
+                    finalOutput = filesystem.my_cat(command_parsed[1]);
+                }else if (command_parsed[0] == "ln"){
+                    filesystem.my_ln(command_parsed[1], command_parsed[2]);
                 } else if (command_parsed[0] == "shutdown"){
-                cout << "Shutting down the server..." << endl;
-                shutdown = true; // set the shutdown flag to true
-                break;
+                    cout << "Shutting down the server..." << endl;
+                    shutdown = true; // set the shutdown flag to true
+                    break;
+                }else{
+                    throw invalid_argument("[Internal Error] Invalid Command");
                 }
 
                 for (const auto& i : command_parsed) {

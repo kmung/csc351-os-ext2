@@ -16,7 +16,7 @@ using namespace std;
 
 int main(int argc, char **argv) {
     // Create a filesystem object
-    fs filesystem;
+    fs filesystem("/home/ckmung/Documents/csc351/virtual_disk.vhd");
 
     // Import a test png file
     filesystem.my_lcp("/home/ckmung/Documents/csc351/csc351-os-ext2/test.png", "testfile");
