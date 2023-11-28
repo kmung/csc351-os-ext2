@@ -19,7 +19,7 @@ using namespace std;
 
 fs::fs() {
     // Write your own disk path here
-    string devicePath = "C:/Users/ssyak/Downloads/virtual_disk.vhd";
+    string devicePath = "/home/ckmung/Documents/csc351/virtual_disk.vhd";
 
     curPath = "";
     curInum = 0;
@@ -142,7 +142,7 @@ void fs::findParent(fstream& disk, string fileName, vector<dentry>& parentDentri
     vector<string> pathComponents;
 
     // Use a while loop to tokenize the path and store components in the vector
-    while (getline(iss, token, '\\')) {
+    while (getline(iss, token, '/')) {
         pathComponents.push_back(token);
     }
 
@@ -182,7 +182,7 @@ void fs::findParent(fstream& disk, string fileName, vector<dentry>& parentDentri
 //******************************************************************************
 void fs::updateParentDentry(fstream& disk, string fileName, int inum, vector<dentry> parentDentries, int parentInum) {
     // Extract the file name from the file path
-    size_t pos = fileName.find_last_of("\\");
+    size_t pos = fileName.find_last_of("/");
     string fName = fileName.substr(pos + 1);
 
     // Create the new dentry for the file that will be added to the parent directory
@@ -301,7 +301,7 @@ int fs::my_creat(const string& fileName, mode_t mode) {
     }
 
     // Extract the file name from the file path
-    size_t pos = fileName.find_last_of("/\\");
+    size_t pos = fileName.find_last_of("//");
     string fName = fileName.substr(pos + 1);
 
     // Find a free inode and data block
@@ -387,7 +387,7 @@ int fs::my_creat(const string& fileName, mode_t mode) {
 int fs::my_open(const char *pathname, mode_t mode){
     int rc = -1;
     string pathStr = pathname;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
@@ -432,7 +432,7 @@ bool fs::my_stat(const string& pathname, struct stat& buf) {
     bool rc = false;
 
     string pathStr = pathname;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
@@ -674,7 +674,7 @@ string fs::my_ls(){
 
     if (entries[0].nEntries > 2){
         for (int i = 2; i < entries[0].nEntries; i++) {
-            string newPath = curPath + "\\" + entries[i].fname;
+            string newPath = curPath + "/" + entries[i].fname;
             struct stat fileStat;
             if (my_stat(newPath, fileStat)) {
                 string timeStr = ctime(&fileStat.st_mtime);
@@ -711,7 +711,7 @@ string fs::my_ls(const string& path){
     stringstream ss;
 
     string pathStr = path;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
@@ -731,7 +731,7 @@ string fs::my_ls(const string& path){
 
     if (entries[0].nEntries > 2){
         for (int i = 2; i < entries[0].nEntries; i++) {
-            string newPath = path + "\\" + entries[i].fname;
+            string newPath = path + "/" + entries[i].fname;
             struct stat fileStat;
             if (my_stat(newPath, fileStat)) {
                 string timeStr = ctime(&fileStat.st_mtime);
@@ -774,7 +774,7 @@ string fs::my_cd(const string& name){
     vector<string> pathComponents;
 
     // Use a while loop to tokenize the path and store components in the vector
-    while (getline(iss, token, '\\')) {
+    while (getline(iss, token, '/')) {
         pathComponents.push_back(token);
     }
 
@@ -785,7 +785,7 @@ string fs::my_cd(const string& name){
         for (int j = 0; j < entries[0].nEntries; j++) {
             if (entries[j].fname == pathComponents[i]) {
                 // The file exists, update current path and current inode
-                curPath += "\\" + pathComponents[i];
+                curPath += "/" + pathComponents[i];
                 curInum = entries[j].inode;
                 break;
             } 
@@ -813,7 +813,7 @@ int fs::my_rmdir(const string& path){
     int rc = -1;
 
     string pathStr = path;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
@@ -879,7 +879,7 @@ int fs::my_chown(const string& name, int owner, int group) {
     int rc = -1;
 
     string pathStr = name;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
@@ -952,7 +952,7 @@ int fs::my_mv(const string& srcPath, const string& destPath){
     int rc = my_cp(srcPath, destPath);
 
     string pathStr = srcPath;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     // Find the source file's parent directory and its dentry
@@ -985,7 +985,7 @@ int fs::my_rm(const string& name){
     int rc = -1;
 
     string pathStr = name;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
@@ -1050,7 +1050,7 @@ int fs::my_rm(const string& name){
 int fs::my_ln(const string& srcPath, const string& destPath){
     int rc = -1;
     string pathStr = srcPath;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;

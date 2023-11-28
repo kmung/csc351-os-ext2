@@ -31,6 +31,11 @@ void init_shell() {
   cout << "\n\n\t********************************************\n\n" << endl;
 }
 
+// init the fs
+void init_fs() { 
+
+}
+
   /*
   TODO: write a REPL : Read-Eval-Print-Loop
   */

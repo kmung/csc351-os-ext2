@@ -30,7 +30,7 @@ int createDisk(const string& devicePath){
 	int rc = -1;
 
 	// 2GB memory size
-	const int memory_size = 2ULL * 1024 * 1024 * 1024;
+	const uint32_t memory_size = 2ULL * 1024 * 1024 * 1024;
 
 	// 4KB block size
 	const size_t block_size = 4 * 1024;
@@ -54,11 +54,13 @@ int createDisk(const string& devicePath){
 	// Initialize all bytes to 0
 	char block[block_size] = {0}; 
 
+    cout << num_blocks << " " << block_size << endl;
+    cout << memory_size << endl;
 	// Start from 1, as 0 is used by superblock
 	for (size_t i = 1; i < num_blocks; ++i) { 
 		disk.write(block, block_size);
 	}
-
+    
 	// Check for write errors
 	if (!disk) {
 		cerr << "Error: Could not write to file at " << devicePath << '\n';
