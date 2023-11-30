@@ -185,7 +185,7 @@
 #if JSON_DIAGNOSTICS
     #include <numeric> // accumulate
 #endif
-#include <stdexcept> // runtime_error
+#include <stdexcept> // invalid_argument
 #include <string> // to_string
 #include <vector> // vector
 
@@ -4397,7 +4397,7 @@ class exception : public std::exception
 
   private:
     /// an exception object as storage for error messages
-    std::runtime_error m;
+    std::invalid_argument m;
 };
 
 /// @brief exception indicating a parse error

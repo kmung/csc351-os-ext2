@@ -241,7 +241,7 @@ void readInode(fstream& disk, int inum, Inode& inode){
     // Check if the disk file is open
     if (!disk.is_open()) {
 		cout << "Disk file is not open" << endl;
-        throw runtime_error("Disk file is not open");
+        throw invalid_argument("Disk file is not open");
 
     }
 
@@ -251,7 +251,7 @@ void readInode(fstream& disk, int inum, Inode& inode){
     // Check if the seek failed
     if (disk.fail()) {
 		cout << "Failed to seek to inode" << endl;
-        throw runtime_error("Failed to seek to inode");
+        throw invalid_argument("Failed to seek to inode");
     }
 
     // Read the inode
@@ -261,7 +261,7 @@ void readInode(fstream& disk, int inum, Inode& inode){
     // Check if the read failed
     if (disk.fail()) {
 		cout << "Failed to read inode" << endl;
-        throw runtime_error("Failed to read inode");
+        throw invalid_argument("Failed to read inode");
     }
 
     // Convert the buffer to an Inode structure

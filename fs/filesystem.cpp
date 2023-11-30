@@ -50,7 +50,7 @@ fs::fs(string vhd_path) {
     inodeBitmap.setBit(0, true);
 
     // the root directory
-    my_creat("init", 0777);
+    my_creat("init", 0777 | S_IFDIR);
 }
 
 //******************************************************************************
@@ -65,7 +65,7 @@ void fs::writeInode(fstream& disk, int inodeNum, Inode& inode) {
 
     // Check if the disk file is open
     if (!disk.is_open()) {
-        throw runtime_error("Disk file is not open");
+        throw invalid_argument("Disk file is not open");
     }
 
     // Calculate the position of the inode in the file
@@ -76,7 +76,7 @@ void fs::writeInode(fstream& disk, int inodeNum, Inode& inode) {
 
     // Check if the seek failed
     if (disk.fail()) {
-        throw runtime_error("Failed to seek to inode");
+        throw invalid_argument("Failed to seek to inode");
     }
 
     // Write the inode data
@@ -84,7 +84,7 @@ void fs::writeInode(fstream& disk, int inodeNum, Inode& inode) {
 
     // Check if the write failed
     if (disk.fail()) {
-        throw runtime_error("Failed to write inode");
+        throw invalid_argument("Failed to write inode");
     }
 
     disk.seekp(curPosition, ios_base::beg);
@@ -288,19 +288,19 @@ int fs::my_creat(const string& fileName, mode_t mode) {
     // Check if the disk file is open
     if (!disk.is_open()) {
         cout << "Disk file is not open" << endl;
-        throw runtime_error("Disk file is not open");
+        throw invalid_argument("Disk file is not open");
     }
 
     // Check if the file name is empty
     if (fileName.empty()) {
         cout << "File name is empty" << endl;
-        throw runtime_error("File name is empty");
+        throw invalid_argument("File name is empty");
     }
 
     // Check if the file already exists
     if (my_open(fileName.c_str(), mode) != -1) {
         cout << "File already exists: " << fileName << endl;
-        throw runtime_error("File already exists: " + fileName);
+        throw invalid_argument("File already exists: " + fileName);
     }
 
     // Extract the file name from the file path
@@ -376,7 +376,7 @@ int fs::my_creat(const string& fileName, mode_t mode) {
         blockBitmap.setBit(blockNum + 1, false);
 
         // Throw an error
-        throw runtime_error("Parent directory not found");
+        throw invalid_argument("Parent directory not found");
     }
 
     // Mark openFdTable to indicate the file is opened
@@ -469,7 +469,7 @@ bool fs::my_stat(const string& pathname, struct stat& buf) {
         buf.st_ctime = inode.ctime;
     } else {
         cout << "File not found" << endl;
-        throw runtime_error("File not found");
+        throw invalid_argument("File not found");
     }
 
     return rc;
@@ -590,7 +590,7 @@ int fs::my_read(int fd, char* buffer, int nbytes) {
                         } else {
                             cout << "Failed to read file: Unknown error" << endl;
                         }
-                        throw runtime_error("Failed to read file");
+                        throw invalid_argument("Failed to read file");
                     }
                 } else {
                     cout << "Current position is not on the right spot" << endl;
@@ -863,15 +863,15 @@ int fs::my_rmdir(const string& path){
 
             } else {
                 cout << "Directory is not empty" << endl;
-                throw runtime_error("Directory is not empty");
+                throw invalid_argument("Directory is not empty");
             }
         } else {
             cout << "File is not a directory" << endl;
-            throw runtime_error("File is not a directory");
+            throw invalid_argument("File is not a directory");
         }
     } else {
         cout << "rmdir File not found" << endl;
-        throw runtime_error("File not found");
+        throw invalid_argument("File not found");
     }
 
     return rc;
@@ -912,7 +912,7 @@ int fs::my_chown(const string& name, int owner, int group) {
         writeInode(disk, inum, inode);
     } else {
         cout << "Chown File not found" << endl;
-        throw runtime_error("File not found");
+        throw invalid_argument("File not found");
     }
 
     return rc;
@@ -1035,15 +1035,15 @@ int fs::my_rm(const string& name){
 
             } else {
                 cout << "Directory is not empty" << endl;
-                throw runtime_error("Directory is not empty");
+                throw invalid_argument("Directory is not empty");
             }
         } else {
             cout << "File is not a file" << endl;
-            throw runtime_error("File is not a file");
+            throw invalid_argument("File is not a file");
         }
     } else {
         cout << "rmdir File not found" << endl;
-        throw runtime_error("File not found");
+        throw invalid_argument("File not found");
     }
 
     return rc;
@@ -1219,4 +1219,9 @@ int fs::my_Lcp(const string& srcPath, const string& destPath) {
     destFile.close();
 
     return 0;
+}
+
+// get current working directory
+string fs::my_getcwd(){
+    return curPath;
 }

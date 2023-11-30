@@ -38,18 +38,29 @@ void init_shell() {
 void repl(int sock) {
   char buffer[MAX_BUFFER_SIZE];
   char cwd[MAX_BUFFER_SIZE]; // to store the current working directory
-  //string input;
 
   while (true) {
     // cout << "breaking" <<endl;
     // break;
 
-    // get the current working directory
-    if (getcwd(cwd, sizeof(cwd)) != NULL) {
-      cout << cwd << "-> "; // prompt the user with current working directory and -> to indicate that the user can enter a command
-    } else {
-      cerr << "Error getting current working directory!" << endl;
+    // // get the current working directory
+    // if (getcwd(cwd, sizeof(cwd)) != NULL) {
+    //   cout << cwd << "-> "; // prompt the user with current working directory and -> to indicate that the user can enter a command
+    // } else {
+    //   cerr << "Error getting current working directory!" << endl;
+    //   break;
+    // }
+
+    // receive the current working directory from the server
+    int cwd_received = recv(sock, cwd, MAX_BUFFER_SIZE - 1, 0);
+    if (cwd_received < 0) {
+      cerr << "Error receiving current working directory from server!" << endl;
       break;
+    } else {
+      cwd[cwd_received] = '\0';
+
+      // output the current working directory
+      cout << cwd << "-> ";
     }
 
     // get user input

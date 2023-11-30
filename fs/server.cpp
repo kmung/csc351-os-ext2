@@ -156,8 +156,10 @@ vector<string> disassemble_command(const string& command){
     return disassembled_command;
 }
 
+string json_path = "/home/ckmung/Documents/csc351/csc351-os-ext2/fs/commands.json";
+
 // TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
-ifstream f(R"(/home/ckmung/Documents/csc351/csc351-os-ext2/fs/commands.json)");
+ifstream f(json_path);
 json COMMAND_TEMPLATE = json::parse(f);
 
 vector<string> parse_command(const string& command, string& cwd){
@@ -266,17 +268,28 @@ int main() {
         continue;
     }
 
-    // receive data from the client
+    // buffer to store data
     char buffer[MAX_BUFFER_SIZE];
 
     fs filesystem("virtual_disk.vhd");
+
+    // send current working directory to the client
+    string cwd = filesystem.my_getcwd();
+    cwd.copy(buffer, MAX_BUFFER_SIZE - 1);
+    buffer[MAX_BUFFER_SIZE - 1] = '\0'; // null terminate the buffer
+    if (send(client, buffer, strlen(buffer), 0) < 0) {
+        cerr << "Couldn't send current working directory to the client" << endl;
+        break;
+    }
     
     while (true) {
         memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
+        cout << "Starting..." << endl;
         if (recv(client, buffer, MAX_BUFFER_SIZE, 0) < 0) {
         cerr << "Error receiving data from client!" << endl;
         break;
         }
+         cout << "AAAA-Starting..." << endl;
         // if the client sends a non-empty string, process the command
         if (string(buffer) != "") {
             string command = string(buffer);
