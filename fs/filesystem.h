@@ -52,7 +52,7 @@ class fs {
 		int allocateMem(int allocateSize, int inum, int& curMaxBlocks);
 
 	public:
-		fs();
+		fs(string vhd_path);
 		~fs();
 
 		// refer to https://man7.org/linux/man-pages/man2/syscalls.2.html for more
@@ -76,6 +76,8 @@ class fs {
 		int my_mkdir(const string& name, mode_t mode);
 		// If path is not given, remove current directory 
 		int my_mkdir(mode_t mode);
+		//keep track of current directory
+		string my_getcwd();
 
 
 		int my_rmdir(const string& name);

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <time.h>
 #include <vector>
+#include <cstdint>
 
 using namespace std;
 

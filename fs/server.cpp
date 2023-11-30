@@ -14,13 +14,14 @@
 #include "libraries/json_fwd.hpp"
 #include <fstream>
 #include <sstream>
+#include "filesystem.h"
 
 using namespace std;
 using json = nlohmann::json;
 
 // define port number to listen to
 #define PORT 8080 // port 8080 is common application web server port
-#define MAX_BUFFER_SIZE 4096 // max buffer size for incoming data, server can receive up to 1024 bytes of data at a time from the client
+#define MAX_BUFFER_SIZE 4096 // max buffer size for incoming data
 
 // function to load commands from commands.json
 nlohmann::json loadCommands() {
@@ -128,7 +129,7 @@ public:
 
 
 string del_spaces(string str){
-    str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+    str.erase(remove(str.begin(), str.end(), ' '), str.end());
     return str;
 }
 
@@ -155,8 +156,10 @@ vector<string> disassemble_command(const string& command){
     return disassembled_command;
 }
 
+string json_path = "/home/ckmung/Documents/csc351/csc351-os-ext2/fs/commands.json";
+
 // TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
-ifstream f(R"(/home/ckmung/Documents/csc351/csc351-os-ext2/fs/commands.json)");
+ifstream f(json_path);
 json COMMAND_TEMPLATE = json::parse(f);
 
 vector<string> parse_command(const string& command, string& cwd){
@@ -252,59 +255,110 @@ int main() {
     return EXIT_FAILURE;
   }
 
-  // accept incoming connections
-  struct sockaddr_in clientAddress;
-  socklen_t clientAddrLen = sizeof(clientAddress);
-  int client = accept(server, (struct sockaddr*)&clientAddress, &clientAddrLen);
-  if (client < 0) {
-    cerr << "Error accepting connection!" << endl;
-    return EXIT_FAILURE;
-  }
+  // shutdown flag
+  bool shutdown = false;
 
-  // receive data from the client
-  char buffer[MAX_BUFFER_SIZE];
-  
   while (true) {
-    memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
-    if (recv(client, buffer, MAX_BUFFER_SIZE, 0) < 0) {
-      cerr << "Error receiving data from client!" << endl;
-      break;
+    // accept incoming connections
+    struct sockaddr_in clientAddress;
+    socklen_t clientAddrLen = sizeof(clientAddress);
+    int client = accept(server, (struct sockaddr*)&clientAddress, &clientAddrLen);
+    if (client < 0) {
+        cerr << "Error accepting connection!" << endl;
+        continue;
     }
-    // if the client sends a non-empty string, process the command
-    if (string(buffer) != "") {
-        string command = string(buffer);
-        cout << "Received command: " << command << endl;
-        string path = string("/system/user");
 
-        string finalOutput = "";
-        try {
-            vector<string> command_parsed = parse_command(command, path);
+    // buffer to store data
+    char buffer[MAX_BUFFER_SIZE];
 
-            if (command_parsed[0] == "ls") {
-            // code goes here
-            } else if (command_parsed[0] == "shutdown"){
-            cout << "Shutting down the server..." << endl;
-            break;
-            }
+    fs filesystem("virtual_disk.vhd");
 
-            for (const auto& i : command_parsed) {
-                finalOutput += i + " -- ";
-            }
-        } catch (const invalid_argument& e) {
-            finalOutput = e.what();
-        }
-
-        cout << finalOutput << "[server-output]" << endl;
-        if (send(client, finalOutput.c_str(), finalOutput.size(), 0) < 0) {
-        cerr << "Couldn't send an output to the client" << endl;
+    // send current working directory to the client
+    string cwd = filesystem.my_getcwd();
+    cwd.copy(buffer, MAX_BUFFER_SIZE - 1);
+    buffer[MAX_BUFFER_SIZE - 1] = '\0'; // null terminate the buffer
+    if (send(client, buffer, strlen(buffer), 0) < 0) {
+        cerr << "Couldn't send current working directory to the client" << endl;
         break;
-        }
     }
     
+    while (true) {
+        memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
+        cout << "Starting..." << endl;
+        if (recv(client, buffer, MAX_BUFFER_SIZE, 0) < 0) {
+        cerr << "Error receiving data from client!" << endl;
+        break;
+        }
+         cout << "AAAA-Starting..." << endl;
+        // if the client sends a non-empty string, process the command
+        if (string(buffer) != "") {
+            string command = string(buffer);
+            cout << "Received command: " << command << endl;
+            string path = string("/system/user");
+
+            string finalOutput = "";
+            try {
+                vector<string> command_parsed = parse_command(command, path);
+
+                if (command_parsed[0] == "ls") {
+                    if (command_parsed.size() == 1) {
+                        finalOutput = filesystem.my_ls();
+                    } else {
+                        finalOutput = filesystem.my_ls(command_parsed[1]);
+                    }
+                } else if (command_parsed[0] == "cd") {
+                    filesystem.my_cd(command_parsed[1]);
+                }else if (command_parsed[0] == "mkdir"){
+                    filesystem.my_mkdir(command_parsed[1], NULL);
+                }else if (command_parsed[0] == "Lcp"){
+                    filesystem.my_Lcp(command_parsed[1], command_parsed[2]);
+                }else if (command_parsed[0] == "lcp"){
+                    filesystem.my_lcp(command_parsed[1], command_parsed[2]);
+                }else if (command_parsed[0] == "rm"){
+                    filesystem.my_rm(command_parsed[1]);
+                }else if (command_parsed[0] == "rmdir"){
+                    filesystem.my_rmdir(command_parsed[1]);
+                }else if (command_parsed[0] == "chown"){
+                    filesystem.my_chown(command_parsed[1], stoi(command_parsed[2]), stoi(command_parsed[3]));
+                }else if (command_parsed[0] == "cp"){
+                    filesystem.my_cp(command_parsed[1], command_parsed[2]);
+                }else if (command_parsed[0] == "mv"){
+                    filesystem.my_mv(command_parsed[1], command_parsed[2]);
+                }else if (command_parsed[0] == "cat"){
+                    finalOutput = filesystem.my_cat(command_parsed[1]);
+                }else if (command_parsed[0] == "ln"){
+                    filesystem.my_ln(command_parsed[1], command_parsed[2]);
+                } else if (command_parsed[0] == "shutdown"){
+                    cout << "Shutting down the server..." << endl;
+                    shutdown = true; // set the shutdown flag to true
+                    break;
+                }else{
+                    throw invalid_argument("[Internal Error] Invalid Command");
+                }
+
+                for (const auto& i : command_parsed) {
+                    finalOutput += i + " -- ";
+                }
+            } catch (const invalid_argument& e) {
+                finalOutput = e.what();
+            }
+
+            cout << finalOutput << "[server-output]" << endl;
+            if (send(client, finalOutput.c_str(), finalOutput.size(), 0) < 0) {
+            cerr << "Couldn't send an output to the client" << endl;
+            break;
+            }
+        }  
+    }
+    // close the client socket
+    close(client);
+
+    // break the loop if the shutdown flag is set to true
+    if (shutdown) {
+      break;
+    }
   }
 
-  // close the client socket
-  close(client);
   // close the server socket
   close(server);
   

@@ -30,7 +30,7 @@ int createDisk(const string& devicePath){
 	int rc = -1;
 
 	// 2GB memory size
-	const int memory_size = 2ULL * 1024 * 1024 * 1024;
+	const uint32_t memory_size = 2ULL * 1024 * 1024 * 1024;
 
 	// 4KB block size
 	const size_t block_size = 4 * 1024;
@@ -54,11 +54,13 @@ int createDisk(const string& devicePath){
 	// Initialize all bytes to 0
 	char block[block_size] = {0}; 
 
+    cout << num_blocks << " " << block_size << endl;
+    cout << memory_size << endl;
 	// Start from 1, as 0 is used by superblock
 	for (size_t i = 1; i < num_blocks; ++i) { 
 		disk.write(block, block_size);
 	}
-
+    
 	// Check for write errors
 	if (!disk) {
 		cerr << "Error: Could not write to file at " << devicePath << '\n';
@@ -239,7 +241,7 @@ void readInode(fstream& disk, int inum, Inode& inode){
     // Check if the disk file is open
     if (!disk.is_open()) {
 		cout << "Disk file is not open" << endl;
-        throw runtime_error("Disk file is not open");
+        throw invalid_argument("Disk file is not open");
 
     }
 
@@ -249,7 +251,7 @@ void readInode(fstream& disk, int inum, Inode& inode){
     // Check if the seek failed
     if (disk.fail()) {
 		cout << "Failed to seek to inode" << endl;
-        throw runtime_error("Failed to seek to inode");
+        throw invalid_argument("Failed to seek to inode");
     }
 
     // Read the inode
@@ -259,7 +261,7 @@ void readInode(fstream& disk, int inum, Inode& inode){
     // Check if the read failed
     if (disk.fail()) {
 		cout << "Failed to read inode" << endl;
-        throw runtime_error("Failed to read inode");
+        throw invalid_argument("Failed to read inode");
     }
 
     // Convert the buffer to an Inode structure

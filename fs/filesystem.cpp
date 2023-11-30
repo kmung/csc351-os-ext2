@@ -17,9 +17,9 @@
 
 using namespace std;
 
-fs::fs() {
+fs::fs(string vhd_path) {
     // Write your own disk path here
-    string devicePath = "C:/Users/ssyak/Downloads/virtual_disk.vhd";
+    string devicePath = vhd_path;
 
     curPath = "";
     curInum = 0;
@@ -48,6 +48,9 @@ fs::fs() {
     blockBitmap.setBit(0, true);
     blockBitmap.setBit(1, true);
     inodeBitmap.setBit(0, true);
+
+    // the root directory
+    my_creat("init", 0777 | S_IFDIR);
 }
 
 //******************************************************************************
@@ -62,7 +65,7 @@ void fs::writeInode(fstream& disk, int inodeNum, Inode& inode) {
 
     // Check if the disk file is open
     if (!disk.is_open()) {
-        throw runtime_error("Disk file is not open");
+        throw invalid_argument("Disk file is not open");
     }
 
     // Calculate the position of the inode in the file
@@ -73,7 +76,7 @@ void fs::writeInode(fstream& disk, int inodeNum, Inode& inode) {
 
     // Check if the seek failed
     if (disk.fail()) {
-        throw runtime_error("Failed to seek to inode");
+        throw invalid_argument("Failed to seek to inode");
     }
 
     // Write the inode data
@@ -81,7 +84,7 @@ void fs::writeInode(fstream& disk, int inodeNum, Inode& inode) {
 
     // Check if the write failed
     if (disk.fail()) {
-        throw runtime_error("Failed to write inode");
+        throw invalid_argument("Failed to write inode");
     }
 
     disk.seekp(curPosition, ios_base::beg);
@@ -142,7 +145,7 @@ void fs::findParent(fstream& disk, string fileName, vector<dentry>& parentDentri
     vector<string> pathComponents;
 
     // Use a while loop to tokenize the path and store components in the vector
-    while (getline(iss, token, '\\')) {
+    while (getline(iss, token, '/')) {
         pathComponents.push_back(token);
     }
 
@@ -182,7 +185,7 @@ void fs::findParent(fstream& disk, string fileName, vector<dentry>& parentDentri
 //******************************************************************************
 void fs::updateParentDentry(fstream& disk, string fileName, int inum, vector<dentry> parentDentries, int parentInum) {
     // Extract the file name from the file path
-    size_t pos = fileName.find_last_of("\\");
+    size_t pos = fileName.find_last_of("/");
     string fName = fileName.substr(pos + 1);
 
     // Create the new dentry for the file that will be added to the parent directory
@@ -285,23 +288,23 @@ int fs::my_creat(const string& fileName, mode_t mode) {
     // Check if the disk file is open
     if (!disk.is_open()) {
         cout << "Disk file is not open" << endl;
-        throw runtime_error("Disk file is not open");
+        throw invalid_argument("Disk file is not open");
     }
 
     // Check if the file name is empty
     if (fileName.empty()) {
         cout << "File name is empty" << endl;
-        throw runtime_error("File name is empty");
+        throw invalid_argument("File name is empty");
     }
 
     // Check if the file already exists
     if (my_open(fileName.c_str(), mode) != -1) {
         cout << "File already exists: " << fileName << endl;
-        throw runtime_error("File already exists: " + fileName);
+        throw invalid_argument("File already exists: " + fileName);
     }
 
     // Extract the file name from the file path
-    size_t pos = fileName.find_last_of("/\\");
+    size_t pos = fileName.find_last_of("//");
     string fName = fileName.substr(pos + 1);
 
     // Find a free inode and data block
@@ -373,7 +376,7 @@ int fs::my_creat(const string& fileName, mode_t mode) {
         blockBitmap.setBit(blockNum + 1, false);
 
         // Throw an error
-        throw runtime_error("Parent directory not found");
+        throw invalid_argument("Parent directory not found");
     }
 
     // Mark openFdTable to indicate the file is opened
@@ -387,7 +390,7 @@ int fs::my_creat(const string& fileName, mode_t mode) {
 int fs::my_open(const char *pathname, mode_t mode){
     int rc = -1;
     string pathStr = pathname;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
@@ -432,7 +435,7 @@ bool fs::my_stat(const string& pathname, struct stat& buf) {
     bool rc = false;
 
     string pathStr = pathname;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
@@ -466,7 +469,7 @@ bool fs::my_stat(const string& pathname, struct stat& buf) {
         buf.st_ctime = inode.ctime;
     } else {
         cout << "File not found" << endl;
-        throw runtime_error("File not found");
+        throw invalid_argument("File not found");
     }
 
     return rc;
@@ -587,7 +590,7 @@ int fs::my_read(int fd, char* buffer, int nbytes) {
                         } else {
                             cout << "Failed to read file: Unknown error" << endl;
                         }
-                        throw runtime_error("Failed to read file");
+                        throw invalid_argument("Failed to read file");
                     }
                 } else {
                     cout << "Current position is not on the right spot" << endl;
@@ -674,7 +677,7 @@ string fs::my_ls(){
 
     if (entries[0].nEntries > 2){
         for (int i = 2; i < entries[0].nEntries; i++) {
-            string newPath = curPath + "\\" + entries[i].fname;
+            string newPath = curPath + "/" + entries[i].fname;
             struct stat fileStat;
             if (my_stat(newPath, fileStat)) {
                 string timeStr = ctime(&fileStat.st_mtime);
@@ -711,7 +714,7 @@ string fs::my_ls(const string& path){
     stringstream ss;
 
     string pathStr = path;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
@@ -731,7 +734,7 @@ string fs::my_ls(const string& path){
 
     if (entries[0].nEntries > 2){
         for (int i = 2; i < entries[0].nEntries; i++) {
-            string newPath = path + "\\" + entries[i].fname;
+            string newPath = path + "/" + entries[i].fname;
             struct stat fileStat;
             if (my_stat(newPath, fileStat)) {
                 string timeStr = ctime(&fileStat.st_mtime);
@@ -774,7 +777,7 @@ string fs::my_cd(const string& name){
     vector<string> pathComponents;
 
     // Use a while loop to tokenize the path and store components in the vector
-    while (getline(iss, token, '\\')) {
+    while (getline(iss, token, '/')) {
         pathComponents.push_back(token);
     }
 
@@ -785,7 +788,7 @@ string fs::my_cd(const string& name){
         for (int j = 0; j < entries[0].nEntries; j++) {
             if (entries[j].fname == pathComponents[i]) {
                 // The file exists, update current path and current inode
-                curPath += "\\" + pathComponents[i];
+                curPath += "/" + pathComponents[i];
                 curInum = entries[j].inode;
                 break;
             } 
@@ -813,7 +816,7 @@ int fs::my_rmdir(const string& path){
     int rc = -1;
 
     string pathStr = path;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
@@ -860,15 +863,15 @@ int fs::my_rmdir(const string& path){
 
             } else {
                 cout << "Directory is not empty" << endl;
-                throw runtime_error("Directory is not empty");
+                throw invalid_argument("Directory is not empty");
             }
         } else {
             cout << "File is not a directory" << endl;
-            throw runtime_error("File is not a directory");
+            throw invalid_argument("File is not a directory");
         }
     } else {
         cout << "rmdir File not found" << endl;
-        throw runtime_error("File not found");
+        throw invalid_argument("File not found");
     }
 
     return rc;
@@ -879,7 +882,7 @@ int fs::my_chown(const string& name, int owner, int group) {
     int rc = -1;
 
     string pathStr = name;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
@@ -909,7 +912,7 @@ int fs::my_chown(const string& name, int owner, int group) {
         writeInode(disk, inum, inode);
     } else {
         cout << "Chown File not found" << endl;
-        throw runtime_error("File not found");
+        throw invalid_argument("File not found");
     }
 
     return rc;
@@ -952,7 +955,7 @@ int fs::my_mv(const string& srcPath, const string& destPath){
     int rc = my_cp(srcPath, destPath);
 
     string pathStr = srcPath;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     // Find the source file's parent directory and its dentry
@@ -985,7 +988,7 @@ int fs::my_rm(const string& name){
     int rc = -1;
 
     string pathStr = name;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
@@ -1032,15 +1035,15 @@ int fs::my_rm(const string& name){
 
             } else {
                 cout << "Directory is not empty" << endl;
-                throw runtime_error("Directory is not empty");
+                throw invalid_argument("Directory is not empty");
             }
         } else {
             cout << "File is not a file" << endl;
-            throw runtime_error("File is not a file");
+            throw invalid_argument("File is not a file");
         }
     } else {
         cout << "rmdir File not found" << endl;
-        throw runtime_error("File not found");
+        throw invalid_argument("File not found");
     }
 
     return rc;
@@ -1050,7 +1053,7 @@ int fs::my_rm(const string& name){
 int fs::my_ln(const string& srcPath, const string& destPath){
     int rc = -1;
     string pathStr = srcPath;
-    size_t pos = pathStr.find_last_of("\\");
+    size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
@@ -1216,4 +1219,9 @@ int fs::my_Lcp(const string& srcPath, const string& destPath) {
     destFile.close();
 
     return 0;
+}
+
+// get current working directory
+string fs::my_getcwd(){
+    return curPath;
 }

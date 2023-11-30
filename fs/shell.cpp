@@ -27,27 +27,40 @@ void init_shell() {
   clearShell();
   cout << "\n\n\n\n\t********************************************" << endl;
   cout << "\n\n\t*****The Creative Awesome Shell - Crash*****" << endl;
+  cout << "\n\n\t*****Proceed with caution...*****" << endl;
   cout << "\n\n\t********************************************\n\n" << endl;
 }
+
 
   /*
   TODO: write a REPL : Read-Eval-Print-Loop
   */
- void repl(int sock) {
+void repl(int sock) {
   char buffer[MAX_BUFFER_SIZE];
   char cwd[MAX_BUFFER_SIZE]; // to store the current working directory
-  //string input;
 
   while (true) {
     // cout << "breaking" <<endl;
     // break;
 
-    // get the current working directory
-    if (getcwd(cwd, sizeof(cwd)) != NULL) {
-      cout << cwd << "-> "; // prompt the user with current working directory and -> to indicate that the user can enter a command
-    } else {
-      cerr << "Error getting current working directory!" << endl;
+    // // get the current working directory
+    // if (getcwd(cwd, sizeof(cwd)) != NULL) {
+    //   cout << cwd << "-> "; // prompt the user with current working directory and -> to indicate that the user can enter a command
+    // } else {
+    //   cerr << "Error getting current working directory!" << endl;
+    //   break;
+    // }
+
+    // receive the current working directory from the server
+    int cwd_received = recv(sock, cwd, MAX_BUFFER_SIZE - 1, 0);
+    if (cwd_received < 0) {
+      cerr << "Error receiving current working directory from server!" << endl;
       break;
+    } else {
+      cwd[cwd_received] = '\0';
+
+      // output the current working directory
+      cout << cwd << "-> ";
     }
 
     // get user input
@@ -88,11 +101,17 @@ int main(int argc, char **argv) {
   init_shell();
 
   // sock is client
- int sock = socket(AF_INET, SOCK_STREAM, 0);
- if (sock < 0) {
-   cerr << "Error: Cannot create client socket." << endl;
-   return EXIT_FAILURE;
- }
+  int sock = socket(AF_INET, SOCK_STREAM, 0);
+  if (sock < 0) {
+    cerr << "Error: Cannot create client socket." << endl;
+    return EXIT_FAILURE;
+  }
+
+  int enable = 1;
+  if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(int)) < 0) {
+    cerr << "Error: setsockopt(SO_REUSEADDR) failed" << endl;
+    return EXIT_FAILURE;
+  }
 
   // incoming server details
   struct sockaddr_in serverAddress;
