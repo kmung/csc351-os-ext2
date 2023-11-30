@@ -48,6 +48,9 @@ fs::fs(string vhd_path) {
     blockBitmap.setBit(0, true);
     blockBitmap.setBit(1, true);
     inodeBitmap.setBit(0, true);
+
+    // the root directory
+    my_creat("init", 0777);
 }
 
 //******************************************************************************

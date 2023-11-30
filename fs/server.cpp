@@ -288,13 +288,11 @@ int main() {
                 vector<string> command_parsed = parse_command(command, path);
 
                 if (command_parsed[0] == "ls") {
-                    // code goes here
                     if (command_parsed.size() == 1) {
                         finalOutput = filesystem.my_ls();
                     } else {
                         finalOutput = filesystem.my_ls(command_parsed[1]);
                     }
-
                 } else if (command_parsed[0] == "cd") {
                     filesystem.my_cd(command_parsed[1]);
                 }else if (command_parsed[0] == "mkdir"){
