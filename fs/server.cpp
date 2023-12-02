@@ -258,6 +258,9 @@ int main() {
   // shutdown flag
   bool shutdown = false;
 
+  // state variable
+  bool is_sent = false;
+
   while (true) {
     // accept incoming connections
     struct sockaddr_in clientAddress;
@@ -271,6 +274,7 @@ int main() {
     // buffer to store data
     char buffer[MAX_BUFFER_SIZE];
 
+    // create a filesystem object
     fs filesystem("virtual_disk.vhd");
 
     // send current working directory to the client
@@ -281,6 +285,7 @@ int main() {
         cerr << "Couldn't send current working directory to the client" << endl;
         break;
     }
+    //cout << cwd << endl;
     
     while (true) {
         memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
