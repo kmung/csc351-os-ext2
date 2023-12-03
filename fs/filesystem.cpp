@@ -21,7 +21,7 @@ fs::fs(string vhd_path) {
     // Write your own disk path here
     string devicePath = vhd_path;
 
-    curPath = "";
+    curPath = "init";
     curInum = 0;
 
     // Initialize the bitmaps
@@ -50,7 +50,7 @@ fs::fs(string vhd_path) {
     inodeBitmap.setBit(0, true);
 
     // the root directory
-    my_creat("init", 0777 | S_IFDIR);
+    my_mkdir("init", 0777);
 }
 
 //******************************************************************************
@@ -338,7 +338,7 @@ int fs::my_creat(const string& fileName, mode_t mode) {
     // Initialize the inode
     // Gid and Uid is not using for this assignment, set them to 1000 for now
     // As blocknum is the index of the data block, add it to the first data block address
-    Inode newInode{mode, inodeNum, 2, 1000, 1000, 0, time(nullptr), time(nullptr), time(nullptr), FIRST_DATA_BLOCK + blockNum};
+    Inode newInode{mode, inodeNum, 2, 0, 0, 0, time(nullptr), time(nullptr), time(nullptr), FIRST_DATA_BLOCK + blockNum};
 
     // Write the inode to disk
     writeInode(disk, inodeNum, newInode);
@@ -677,9 +677,8 @@ string fs::my_ls(){
 
     if (entries[0].nEntries > 2){
         for (int i = 2; i < entries[0].nEntries; i++) {
-            string newPath = curPath + "/" + entries[i].fname;
             struct stat fileStat;
-            if (my_stat(newPath, fileStat)) {
+            if (my_stat(curPath, fileStat)) {
                 string timeStr = ctime(&fileStat.st_mtime);
                 timeStr.erase(remove(timeStr.begin(), timeStr.end(), '\n'), timeStr.end());
 
@@ -701,7 +700,7 @@ string fs::my_ls(){
                     << ' ' << timeStr
                     << ' ' << entries[i].fname << endl;
             } else {
-                cout << "Failed to get stats for file: " << newPath << endl;
+                cout << "Failed to get stats for file: " << curPath << endl;
             }
         }
     }

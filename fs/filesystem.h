@@ -50,7 +50,7 @@ class fs {
 		void updateParentDentry(fstream& disk, string fileName, int inum, vector<dentry> parentDentries, int parentInum);
 
 		int allocateMem(int allocateSize, int inum, int& curMaxBlocks);
-
+		
 	public:
 		fs(string vhd_path);
 		~fs();

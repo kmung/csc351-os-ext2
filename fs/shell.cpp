@@ -3,14 +3,17 @@
 #include <cstdlib>
 #include <iostream>
 #include <cassert>
-#include <unistd.h>
-#include <syscall.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#include <arpa/inet.h>
 #include <fstream>
 #include <sstream>
+#ifdef _WIN32
+    #include <windows.h>
+#else
+    #include <unistd.h>
+    #include <arpa/inet.h> 
+#endif
 
 using namespace std;
 
@@ -52,9 +55,15 @@ void repl(int sock) {
     // }
 
     // receive the current working directory from the server
+    memset(cwd, 0, sizeof(cwd));
     int cwd_received = recv(sock, cwd, MAX_BUFFER_SIZE - 1, 0);
-    if (cwd_received < 0) {
-      cerr << "Error receiving current working directory from server!" << endl;
+    cout << "cwd_received: " << cwd_received << endl;
+   if (cwd_received < 0) {
+      int errorNumber = errno;      
+      cerr << "Error receiving current working directory from server! Error number: " << errorNumber << " Error description: " << strerror(errorNumber) << endl;
+      break;
+    } else if (cwd_received == 0) {
+      cerr << "The server closed the connection." << endl;
       break;
     } else {
       cwd[cwd_received] = '\0';
@@ -87,7 +96,7 @@ void repl(int sock) {
     memset(buffer, 0, MAX_BUFFER_SIZE); // 
     if (recv(sock, buffer, MAX_BUFFER_SIZE, 0) < 0) {
       cerr << "Error receiving data from server!" << endl;
-      break;
+      // break;
     }
 
     cout << buffer << endl;

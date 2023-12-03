@@ -6,10 +6,13 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
-#include <unistd.h>
-#include <syscall.h>
-#include <arpa/inet.h> //The arpa/inet.h header file contains definitions for internet operations, from IBM
-#include <sys/socket.h> //The sys/socket.h header file contains sockets definitions. from IBM
+#ifdef _WIN32
+    #include <winsock2.h>
+#else
+    #include <unistd.h>
+    #include <arpa/inet.h> //The arpa/inet.h header file contains definitions for internet operations, from IBM
+    #include <sys/socket.h> //The sys/socket.h header file contains sockets definitions. from IBM
+#endif
 #include "libraries/json.hpp"
 #include "libraries/json_fwd.hpp"
 #include <fstream>
@@ -156,7 +159,7 @@ vector<string> disassemble_command(const string& command){
     return disassembled_command;
 }
 
-string json_path = "/home/ckmung/Documents/csc351/csc351-os-ext2/fs/commands.json";
+string json_path = "C:/Users/ssyak/OneDrive/Desktop/class/2023fall/CSC351/csc351-os-ext2/fs/commands.json";
 
 // TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
 ifstream f(json_path);
@@ -174,7 +177,9 @@ vector<string> parse_command(const string& command, string& cwd){
         if (command_data["name"] == disassembled_command[0]){
             valid_command = true;
             command_sent_to_filesystem.push_back(command_data["name"]);
-            disassembled_command.erase(disassembled_command.begin());
+
+            // disassembled_command.erase(disassembled_command.begin());
+
             int no_of_args = command_data["syntax"]["args"].size();
             int no_of_required_args = 0;
             for (const auto& arg: command_data["syntax"]["args"]){
@@ -183,17 +188,21 @@ vector<string> parse_command(const string& command, string& cwd){
                 }
             }
 
-            if (no_of_args < disassembled_command.size()){
+            cout << "no_of_args: " << no_of_args << endl;
+
+            for (const auto& i : disassembled_command) {
+                cout << i << endl;
+            }
+            
+            if (no_of_args < disassembled_command.size() - 1){
                 throw invalid_argument("Too many arguments");
             }
 
-            if (no_of_required_args > disassembled_command.size()){
+            if (no_of_required_args > disassembled_command.size() - 1){
                 throw invalid_argument("Too few arguments");
             }
 
             for (const auto& arg: command_data["syntax"]["args"]){
-
-                cout << arg << endl;
                 if (required_argument_mode && !arg["required"]){
                     required_argument_mode = false;
                 }
@@ -205,19 +214,22 @@ vector<string> parse_command(const string& command, string& cwd){
 
                 if (!disassembled_command.empty()){
                     string argument = disassembled_command[0];
-                    if (arg["type"] == "path"){
-                        Path path = Path(argument);
-                        argument = Path::make_absolute(cwd_path, path).format();
-                    }else{
-                        throw invalid_argument("Invalid argument type\n "
-                                               "This is caused by an internal error in the command template");
-                    }
+                    // if (arg["type"] == "path"){
+                    //     Path path = Path(argument);
+                    //     argument = Path::make_absolute(cwd_path, path).format();
+                    // }else{
+                    //     cout << "Invalid argument type" << endl;
+                    //     throw invalid_argument("Invalid argument type\n "
+                    //                            "This is caused by an internal error in the command template");
+                    // }
                     command_sent_to_filesystem.push_back(argument);
                     disassembled_command.erase(disassembled_command.begin());
                 }
             }
         }
     }
+
+
 
     if (!valid_command){
         throw invalid_argument("Invalid command");
@@ -258,6 +270,8 @@ int main() {
   // shutdown flag
   bool shutdown = false;
 
+  fs filesystem("virtual_disk.vhd");
+
   while (true) {
     // accept incoming connections
     struct sockaddr_in clientAddress;
@@ -271,45 +285,57 @@ int main() {
     // buffer to store data
     char buffer[MAX_BUFFER_SIZE];
 
-    fs filesystem("virtual_disk.vhd");
 
-    // send current working directory to the client
-    string cwd = filesystem.my_getcwd();
-    cwd.copy(buffer, MAX_BUFFER_SIZE - 1);
-    buffer[MAX_BUFFER_SIZE - 1] = '\0'; // null terminate the buffer
-    if (send(client, buffer, strlen(buffer), 0) < 0) {
-        cerr << "Couldn't send current working directory to the client" << endl;
-        break;
-    }
     
-    while (true) {
+    while (!shutdown) {
+        // send current working directory to the client
+        string cwd = filesystem.my_getcwd();
+        memset(buffer, 0, MAX_BUFFER_SIZE);
+        cout << "cwd: " << cwd << endl;
+        cwd.copy(buffer, MAX_BUFFER_SIZE - 1);
+        buffer[MAX_BUFFER_SIZE - 1] = '\0'; // null terminate the buffer
+        if (send(client, buffer, strlen(buffer), 0) < 0) {
+            cerr << "Couldn't send current working directory to the client" << endl;
+            break;
+        }
+
         memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
         cout << "Starting..." << endl;
         if (recv(client, buffer, MAX_BUFFER_SIZE, 0) < 0) {
-        cerr << "Error receiving data from client!" << endl;
-        break;
+            cout << "buffer: " << buffer << endl;
+            cerr << "Error receiving data from client!" << endl;
+            break;
         }
-         cout << "AAAA-Starting..." << endl;
+        
+
         // if the client sends a non-empty string, process the command
         if (string(buffer) != "") {
             string command = string(buffer);
-            cout << "Received command: " << command << endl;
             string path = string("/system/user");
 
             string finalOutput = "";
+            cout << "buffer: " << buffer << endl;
+
             try {
                 vector<string> command_parsed = parse_command(command, path);
+                for (const auto& i : command_parsed) {
+                    finalOutput = i + " -- ";
+                }
+                cout << "command_parsed.size(): " << command_parsed.size() << endl;
+                cout << "command_parsed[0]: " << command_parsed[0] << endl;
+                cout << "command_parsed[1]: " << command_parsed[1] << endl;
 
                 if (command_parsed[0] == "ls") {
-                    if (command_parsed.size() == 1) {
-                        finalOutput = filesystem.my_ls();
+                    
+                    if (command_parsed.size() == 2) {
+                        finalOutput += filesystem.my_ls();
                     } else {
-                        finalOutput = filesystem.my_ls(command_parsed[1]);
+                        finalOutput += filesystem.my_ls(command_parsed[1]);
                     }
                 } else if (command_parsed[0] == "cd") {
                     filesystem.my_cd(command_parsed[1]);
                 }else if (command_parsed[0] == "mkdir"){
-                    filesystem.my_mkdir(command_parsed[1], NULL);
+                    filesystem.my_mkdir(command_parsed[2], stoi(command_parsed[3]));
                 }else if (command_parsed[0] == "Lcp"){
                     filesystem.my_Lcp(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "lcp"){
@@ -331,32 +357,27 @@ int main() {
                 } else if (command_parsed[0] == "shutdown"){
                     cout << "Shutting down the server..." << endl;
                     shutdown = true; // set the shutdown flag to true
-                    break;
+                    // break;
                 }else{
                     throw invalid_argument("[Internal Error] Invalid Command");
                 }
 
-                for (const auto& i : command_parsed) {
-                    finalOutput += i + " -- ";
-                }
             } catch (const invalid_argument& e) {
                 finalOutput = e.what();
             }
 
             cout << finalOutput << "[server-output]" << endl;
             if (send(client, finalOutput.c_str(), finalOutput.size(), 0) < 0) {
-            cerr << "Couldn't send an output to the client" << endl;
-            break;
+                cerr << "Couldn't send an output to the client" << endl;
+                break;
             }
+            cout << 1 << endl;
         }  
+        cout << 2 << endl;
     }
+    cout << 3 << endl;
     // close the client socket
     close(client);
-
-    // break the loop if the shutdown flag is set to true
-    if (shutdown) {
-      break;
-    }
   }
 
   // close the server socket
