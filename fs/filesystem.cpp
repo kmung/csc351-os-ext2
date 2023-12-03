@@ -802,7 +802,7 @@ string fs::my_cd(const string& name){
 
 //******************************************************************************
 int fs::my_mkdir(const string& path) {
-    return my_creat(path, S_IFDIR);
+    return my_creat(path, 0644 | S_IFDIR);
 }
 
 

@@ -188,11 +188,10 @@ vector<string> parse_command(const string& command, string& cwd){
                 }
             }
 
-            // cout << "no_of_args: " << no_of_args << endl;
-
-            // for (const auto& i : disassembled_command) {
-            //     cout << i << endl;
-            // }
+            cout << "no_of_args: " << no_of_args << endl;
+            for (const auto& i : disassembled_command) {
+                cout << i << endl;
+            }
             
             if (no_of_args < disassembled_command.size() - 1){
                 throw invalid_argument("Too many arguments");
@@ -202,6 +201,7 @@ vector<string> parse_command(const string& command, string& cwd){
                 throw invalid_argument("Too few arguments");
             }
 
+            disassembled_command.erase(disassembled_command.begin());
             for (const auto& arg: command_data["syntax"]["args"]){
                 if (required_argument_mode && !arg["required"]){
                     required_argument_mode = false;
@@ -326,21 +326,24 @@ int main() {
                 for (const auto& i : command_parsed) {
                     finalOutput = i + " -- ";
                 }
-                // cout << "command_parsed.size(): " << command_parsed.size() << endl;
-                // cout << "command_parsed[0]: " << command_parsed[0] << endl;
-                // cout << "command_parsed[1]: " << command_parsed[1] << endl;
+                cout << "command_parsed.size(): " << command_parsed.size() << endl;
+                for (int i = 0; i<command_parsed.size(); i++){
+                    cout << "command_parsed[" << i << "]: " << command_parsed[i] << endl;
+                }
 
                 if (command_parsed[0] == "ls") {
                     
-                    if (command_parsed.size() == 2) {
+                    if (command_parsed.size() == 1) {
                         finalOutput += filesystem.my_ls();
                     } else {
                         finalOutput += filesystem.my_ls(command_parsed[1]);
                     }
                 } else if (command_parsed[0] == "cd") {
-                    filesystem.my_cd(command_parsed[1]);
+                    if(command_parsed.size() > 1){
+                        filesystem.my_cd(command_parsed[1]);
+                    }
                 }else if (command_parsed[0] == "mkdir"){
-                    filesystem.my_mkdir(command_parsed[2]);
+                    filesystem.my_mkdir(command_parsed[1]);
                 }else if (command_parsed[0] == "Lcp"){
                     filesystem.my_Lcp(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "lcp"){
