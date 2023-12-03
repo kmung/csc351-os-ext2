@@ -163,7 +163,7 @@ void initRootdentry(fstream& disk, int inum, int parentInum) {
     dentry rootDentry;
     rootDentry.inode = inum; 
 	// Set entry name to "."
-    strcpy(rootDentry.fname, "itself");
+    strcpy(rootDentry.fname, ".");
 	// Set the number of entries to 2 as we have "." and ".."
     rootDentry.nEntries = 2;
 
@@ -174,7 +174,7 @@ void initRootdentry(fstream& disk, int inum, int parentInum) {
     // Initialize the parent directory inode
     dentry parentDentry;
     parentDentry.inode = parentInum; 
-    strncpy(parentDentry.fname, "parent", MAX_NAME_LEN);
+    strncpy(parentDentry.fname, "..", MAX_NAME_LEN);
 	parentDentry.nEntries = 2;
 
     // Write the parent directory entry to the disk
