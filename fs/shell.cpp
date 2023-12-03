@@ -55,7 +55,8 @@ void repl(int sock) {
     // }
 
     // receive the current working directory from the server
-    memset(cwd, 0, sizeof(cwd));
+    cout << "waiting to recieve cwd" << endl;
+    memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
     int cwd_received = recv(sock, cwd, MAX_BUFFER_SIZE - 1, 0);
     cout << "cwd_received: " << cwd_received << endl;
    if (cwd_received < 0) {
@@ -69,7 +70,7 @@ void repl(int sock) {
       cwd[cwd_received] = '\0';
 
       // output the current working directory
-      cout << cwd << "-> ";
+      cout << string(cwd) << "-> ";
     }
 
     // get user input
@@ -84,6 +85,8 @@ void repl(int sock) {
     cout << "Sending data to server..." << endl;
     // send the user input to the server
     // output error if sending fails
+
+    cout << "sending user input" << endl;
     if (send(sock, buffer, strlen(buffer), 0) < 0) {
       cerr << "Error sending data to server!" << endl;
       break;
@@ -93,6 +96,7 @@ void repl(int sock) {
       break;
     }
 
+    cout << "recieving final output" << endl;
     memset(buffer, 0, MAX_BUFFER_SIZE); // 
     if (recv(sock, buffer, MAX_BUFFER_SIZE, 0) < 0) {
       cerr << "Error receiving data from server!" << endl;
