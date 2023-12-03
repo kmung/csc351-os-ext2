@@ -255,12 +255,18 @@ int main() {
     return EXIT_FAILURE;
   }
 
-  // shutdown flag
-  bool shutdown = false;
+    // create a filesystem object
+   fs filesystem("virtual_disk.vhd");
 
-  // state variable
-  bool is_sent = false;
+   // shutdown flag
+   bool shutdown = false;  
 
+   // state variable
+   bool is_sent = false;  
+
+   // buffer to store data
+    char buffer[MAX_BUFFER_SIZE];
+   
   while (true) {
     // accept incoming connections
     struct sockaddr_in clientAddress;
@@ -271,37 +277,39 @@ int main() {
         continue;
     }
 
-    // buffer to store data
-    char buffer[MAX_BUFFER_SIZE];
+   // cout << "found client and connected" << endl;
 
-    // create a filesystem object
-    fs filesystem("virtual_disk.vhd");
-
-    // send current working directory to the client
-    string cwd = filesystem.my_getcwd();
-    cwd.copy(buffer, MAX_BUFFER_SIZE - 1);
-    buffer[MAX_BUFFER_SIZE - 1] = '\0'; // null terminate the buffer
-    if (send(client, buffer, strlen(buffer), 0) < 0) {
-        cerr << "Couldn't send current working directory to the client" << endl;
-        break;
-    }
+   
     //cout << cwd << endl;
     
     while (true) {
+         // send current working directory to the client
+         
+        string cwd = filesystem.my_getcwd();
         memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
-        cout << "Starting..." << endl;
-        if (recv(client, buffer, MAX_BUFFER_SIZE, 0) < 0) {
-        cerr << "Error receiving data from client!" << endl;
-        break;
+        cwd.copy(buffer, MAX_BUFFER_SIZE - 1);
+        buffer[MAX_BUFFER_SIZE - 1] = '\0'; // null terminate the buffer
+        cout << "sending cwd" << endl;
+        if (send(client, buffer, strlen(buffer), 0) < 0) {
+            cerr << "Couldn't send current working directory to the client" << endl;
+            break;
         }
-         cout << "AAAA-Starting..." << endl;
+        
+        cout << "Starting..." << endl;
+        
+        memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
+        if (recv(client, buffer, MAX_BUFFER_SIZE, 0) < 0) {
+            cerr << "Error receiving data from client!" << endl;
+            break;
+        }
+        cout << "AAAA-Starting..." << endl;
+        string finalOutput = "";
         // if the client sends a non-empty string, process the command
         if (string(buffer) != "") {
             string command = string(buffer);
             cout << "Received command: " << command << endl;
             string path = string("/system/user");
 
-            string finalOutput = "";
             try {
                 vector<string> command_parsed = parse_command(command, path);
 
@@ -344,16 +352,16 @@ int main() {
                 for (const auto& i : command_parsed) {
                     finalOutput += i + " -- ";
                 }
-            } catch (const invalid_argument& e) {
+            } catch (std::exception& e) {
                 finalOutput = e.what();
             }
-
-            cout << finalOutput << "[server-output]" << endl;
-            if (send(client, finalOutput.c_str(), finalOutput.size(), 0) < 0) {
+        } 
+        cout << finalOutput << "[server-output]" << endl;
+        
+        if (send(client, finalOutput.c_str(), finalOutput.size(), 0) < 0) {
             cerr << "Couldn't send an output to the client" << endl;
             break;
-            }
-        }  
+        } 
     }
     // close the client socket
     close(client);
