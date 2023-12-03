@@ -72,10 +72,12 @@ class fs {
 		string my_ls();
 		// It can be absolute path or relative path
 		string my_cd(const string& name);
+		string my_cd();
 		// Need absolute path
 		int my_mkdir(const string& name);
 		//keep track of current directory
 		string my_getcwd();
+		string getAbsolutePath(const string& path);
 
 
 		int my_rmdir(const string& name);

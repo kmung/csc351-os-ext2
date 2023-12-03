@@ -159,7 +159,7 @@ vector<string> disassemble_command(const string& command){
     return disassembled_command;
 }
 
-string json_path = "/home/ckmung/Documents/csc351/csc351-os-ext2/fs/commands.json";
+string json_path = "C:/Users/ssyak/OneDrive/Desktop/class/2023fall/CSC351/csc351-os-ext2/fs/commands.json";
 
 // TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
 ifstream f(json_path);
@@ -171,13 +171,11 @@ vector<string> parse_command(const string& command, string& cwd){
 
     bool valid_command = false;
     vector<string> command_sent_to_filesystem;
-
     for (auto command_data: COMMAND_TEMPLATE["commands"]){
         bool required_argument_mode = true;
         if (command_data["name"] == disassembled_command[0]){
             valid_command = true;
             command_sent_to_filesystem.push_back(command_data["name"]);
-
             // disassembled_command.erase(disassembled_command.begin());
 
             int no_of_args = command_data["syntax"]["args"].size();
@@ -188,11 +186,6 @@ vector<string> parse_command(const string& command, string& cwd){
                 }
             }
 
-            cout << "no_of_args: " << no_of_args << endl;
-            for (const auto& i : disassembled_command) {
-                cout << i << endl;
-            }
-            
             if (no_of_args < disassembled_command.size() - 1){
                 throw invalid_argument("Too many arguments");
             }
@@ -226,14 +219,19 @@ vector<string> parse_command(const string& command, string& cwd){
                     disassembled_command.erase(disassembled_command.begin());
                 }
             }
+            cout << "command_sent_to_filesystem.size(): " << command_sent_to_filesystem.size() << endl;
+            for (int i = 0; i<command_sent_to_filesystem.size(); i++){
+                cout << "command_sent_to_filesystem[" << i << "]: " << command_sent_to_filesystem[i] << endl;
+            }
+            break;
         }
     }
-
 
 
     if (!valid_command){
         throw invalid_argument("Invalid command");
     }
+
     return command_sent_to_filesystem;
 }
 
@@ -314,6 +312,7 @@ int main() {
             cerr << "Error receiving data from client!" << endl;
             break;
         }
+        cout << "buffer: " << buffer << endl;
         // cout << "AAAA-Starting..." << endl;
         string finalOutput = "";
         // if the client sends a non-empty string, process the command
@@ -339,7 +338,9 @@ int main() {
                         finalOutput += filesystem.my_ls(command_parsed[1]);
                     }
                 } else if (command_parsed[0] == "cd") {
-                    if(command_parsed.size() > 1){
+                    if(command_parsed.size() == 1){
+                        filesystem.my_cd();
+                    } else {
                         filesystem.my_cd(command_parsed[1]);
                     }
                 }else if (command_parsed[0] == "mkdir"){
@@ -359,7 +360,7 @@ int main() {
                 }else if (command_parsed[0] == "mv"){
                     filesystem.my_mv(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "cat"){
-                    finalOutput = filesystem.my_cat(command_parsed[1]);
+                    finalOutput += filesystem.my_cat(command_parsed[1]);
                 }else if (command_parsed[0] == "ln"){
                     filesystem.my_ln(command_parsed[1], command_parsed[2]);
                 } else if (command_parsed[0] == "shutdown"){
