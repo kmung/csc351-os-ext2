@@ -121,7 +121,7 @@ void fs::writeStartDentry(fstream& disk, int inum, int parentInum) {
     // Initialize a dentry structure for "."
     dentry dotEntry;
     dotEntry.inode = inum;
-    strncpy(dotEntry.fname, "itself-start", MAX_NAME_LEN);
+    strncpy(dotEntry.fname, ".", MAX_NAME_LEN);
     dotEntry.nEntries = 2;
 
     // Write the "." dentry to the data block
@@ -130,7 +130,7 @@ void fs::writeStartDentry(fstream& disk, int inum, int parentInum) {
     // Initialize a dentry structure for ".."
     dentry dotDotEntry;
     dotDotEntry.inode = parentInum;
-    strncpy(dotDotEntry.fname, "parent-start", MAX_NAME_LEN);
+    strncpy(dotDotEntry.fname, "..", MAX_NAME_LEN);
     dotDotEntry.nEntries = 2;
 
     // Write the ".." dentry to the data block
@@ -776,24 +776,67 @@ string fs::my_cd(const string& name){
     string token;
     vector<string> pathComponents;
 
+
     // Use a while loop to tokenize the path and store components in the vector
     while (getline(iss, token, '/')) {
         pathComponents.push_back(token);
     }
+    curPath = "";
 
-    for (int i = 0; i < pathComponents.size(); i++) {
-        vector<dentry> entries;
-        readDentry(disk, entries, curInum);
-        // Check if the file exists in the current directory
-        for (int j = 0; j < entries[0].nEntries; j++) {
-            if (entries[j].fname == pathComponents[i]) {
-                // The file exists, update current path and current inode
-                curPath += "/" + pathComponents[i];
-                curInum = entries[j].inode;
-                break;
-            } 
-        }
+    for(int i = 0; i < pathComponents.size(); i++){
+        curPath += "/" + pathComponents[i];
     }
+
+
+    // if(pathComponents[0] == ".."){
+    //     cout << "Inuput was .." << endl;
+    //     vector<dentry> parentDentry;
+    //     int parentInum;
+    //     findParent(disk, curPath, parentDentry, parentInum);
+    //     curInum = parentInum;
+
+    //     while (getline(issPath, token, '/')){
+    //         currentPath.push_back(token);
+    //     }
+
+    //     if(currentPath.size() > 1){
+    //         for (int i = 1; i < currentPath.size() - 1; i++) {
+    //             vector<dentry> entries;
+    //             readDentry(disk, entries, curInum);
+    //             // Check if the file exists in the current directory
+    //             for (int j = 0; j < entries[0].nEntries; j++) {
+    //                 if (entries[j].fname == currentPath[i]) {
+    //                     // The file exists, update current path and current inode
+    //                     curPath += "/" + currentPath[i];
+    //                     break;
+    //                 } 
+    //             }
+    //         }
+    //     }
+
+    //     ss << curPath << endl;
+
+    //     return ss.str();
+    // }
+
+    // for (int i = 0; i < pathComponents.size(); i++) {
+    //     vector<dentry> entries;
+    //     readDentry(disk, entries, curInum);
+        
+    //     // Check if the file exists in the current directory
+    //     for (int j = 1; j < entries[0].nEntries; j++) {
+            
+    //         if (entries[j].fname == pathComponents[i]) {
+                
+    //                 // The file exists, update current path and current inode
+    //                 curPath = "/" + pathComponents[i];
+                
+    //             curInum = entries[j].inode;
+    //             break;
+                
+    //         } 
+    //     }
+    // }
 
     ss << curPath << endl;
 
