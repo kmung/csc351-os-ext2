@@ -73,9 +73,7 @@ class fs {
 		// It can be absolute path or relative path
 		string my_cd(const string& name);
 		// Need absolute path
-		int my_mkdir(const string& name, mode_t mode);
-		// If path is not given, remove current directory 
-		int my_mkdir(mode_t mode);
+		int my_mkdir(const string& name);
 		//keep track of current directory
 		string my_getcwd();
 

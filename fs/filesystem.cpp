@@ -50,7 +50,7 @@ fs::fs(string vhd_path) {
     inodeBitmap.setBit(0, true);
 
     // the root directory
-    my_mkdir("init", 0777);
+    my_creat("init", 0777 | S_IFDIR);
 }
 
 //******************************************************************************
@@ -801,14 +801,10 @@ string fs::my_cd(const string& name){
 }
 
 //******************************************************************************
-int fs::my_mkdir(const string& path, mode_t mode) {
-    return my_creat(path, mode | S_IFDIR);
+int fs::my_mkdir(const string& path) {
+    return my_creat(path, S_IFDIR);
 }
 
-//******************************************************************************
-int fs::my_mkdir(mode_t mode) {
-    return my_mkdir(curPath, mode | S_IFDIR);
-}
 
 //******************************************************************************
 int fs::my_rmdir(const string& path){

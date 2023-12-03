@@ -8,6 +8,7 @@
 #include <sys/types.h>
 #include <fstream>
 #include <sstream>
+#include <vector>
 #ifdef _WIN32
     #include <windows.h>
 #else
@@ -25,6 +26,28 @@ void clearShell() {
   cout << "\033[H\033[J";
 }
 
+std::vector<std::string> splitString(const std::string& s, const std::string& delimiters) {
+    std::vector<std::string> tokens;
+    size_t start = 0, end = 0;
+
+    while ((end = s.find_first_of(delimiters, start)) != std::string::npos) {
+        tokens.push_back(s.substr(start, end - start));
+        start = end + 1;
+    }
+
+    tokens.push_back(s.substr(start));
+    return tokens;
+}
+
+string replaceWord(std::string& str, const std::string& target, const std::string& replacement) {
+    size_t pos = 0;
+    while ((pos = str.find(target, pos)) != std::string::npos) {
+        str = str.replace(pos, target.length(), replacement);
+        pos += replacement.length();
+    }
+    return str;
+}
+
 // shell greeting during start up
 void init_shell() {
   clearShell();
@@ -40,8 +63,11 @@ void init_shell() {
   */
 void repl(int sock) {
   char buffer[MAX_BUFFER_SIZE];
-  char cwd[MAX_BUFFER_SIZE]; // to store the current working directory
+  // char cwd[MAX_BUFFER_SIZE]; // to store the current working directory
 
+  string cwd = "";
+
+  bool firstTimeCalled = true;
   while (true) {
     // cout << "breaking" <<endl;
     // break;
@@ -55,26 +81,29 @@ void repl(int sock) {
     // }
 
     // receive the current working directory from the server
-    cout << "waiting to recieve cwd" << endl;
-    memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
-    int cwd_received = recv(sock, cwd, MAX_BUFFER_SIZE - 1, 0);
-    cout << "cwd_received: " << cwd_received << endl;
-   if (cwd_received < 0) {
-      int errorNumber = errno;      
-      cerr << "Error receiving current working directory from server! Error number: " << errorNumber << " Error description: " << strerror(errorNumber) << endl;
-      break;
-    } else if (cwd_received == 0) {
-      cerr << "The server closed the connection." << endl;
-      break;
-    } else {
-      cwd[cwd_received] = '\0';
+    // cout << "waiting to recieve cwd" << endl;
+    // memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
+    // int cwd_received = recv(sock, cwd, MAX_BUFFER_SIZE - 1, 0);
+  //   cout << "cwd_received: " << cwd_received << endl;
+  //  if (cwd_received < 0) {
+  //     int errorNumber = errno;      
+  //     cerr << "Error receiving current working directory from server! Error number: " << errorNumber << " Error description: " << strerror(errorNumber) << endl;
+  //     break;
+  //   } else if (cwd_received == 0) {
+  //     cerr << "The server closed the connection." << endl;
+  //     break;
+  //   } else {
+  //     cwd[cwd_received] = '\0';
 
-      // output the current working directory
-      cout << string(cwd) << "-> ";
-    }
+  //     // output the current working directory
+  //     cout << string(cwd) << "-> ";
+  //   }
 
     // get user input
-    cin.getline(buffer, MAX_BUFFER_SIZE);
+    if (!firstTimeCalled){
+      cout << cwd << "->";
+      cin.getline(buffer, MAX_BUFFER_SIZE);
+    }
 
     // close the shell when user enters exit
     if (string(buffer) == "exit") {
@@ -82,11 +111,11 @@ void repl(int sock) {
       break;
     }
 
-    cout << "Sending data to server..." << endl;
+    // cout << "Sending data to server..." << endl;
     // send the user input to the server
     // output error if sending fails
 
-    cout << "sending user input" << endl;
+    // cout << "sending user input" << endl;
     if (send(sock, buffer, strlen(buffer), 0) < 0) {
       cerr << "Error sending data to server!" << endl;
       break;
@@ -96,14 +125,24 @@ void repl(int sock) {
       break;
     }
 
-    cout << "recieving final output" << endl;
+    // cout << "recieving final output" << endl;
     memset(buffer, 0, MAX_BUFFER_SIZE); // 
     if (recv(sock, buffer, MAX_BUFFER_SIZE, 0) < 0) {
       cerr << "Error receiving data from server!" << endl;
       // break;
     }
 
-    cout << buffer << endl;
+    string splitchar = "[$&^]";
+    vector<string> splits = splitString(string(buffer), splitchar);
+    cwd = splits[0];
+    if (!firstTimeCalled){
+      string buffer_str = string(buffer);
+
+      cout << replaceWord(buffer_str, string(cwd+"[$&^]"), string("")) << endl;
+    }else{
+      firstTimeCalled = false;
+    }
+      
 
   }
  }

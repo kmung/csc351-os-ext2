@@ -159,7 +159,7 @@ vector<string> disassemble_command(const string& command){
     return disassembled_command;
 }
 
-string json_path = "C:/Users/ssyak/OneDrive/Desktop/class/2023fall/CSC351/csc351-os-ext2/fs/commands.json";
+string json_path = "/home/ckmung/Documents/csc351/csc351-os-ext2/fs/commands.json";
 
 // TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
 ifstream f(json_path);
@@ -188,11 +188,11 @@ vector<string> parse_command(const string& command, string& cwd){
                 }
             }
 
-            cout << "no_of_args: " << no_of_args << endl;
+            // cout << "no_of_args: " << no_of_args << endl;
 
-            for (const auto& i : disassembled_command) {
-                cout << i << endl;
-            }
+            // for (const auto& i : disassembled_command) {
+            //     cout << i << endl;
+            // }
             
             if (no_of_args < disassembled_command.size() - 1){
                 throw invalid_argument("Too many arguments");
@@ -298,23 +298,23 @@ int main() {
          // send current working directory to the client
          
         string cwd = filesystem.my_getcwd();
-        memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
-        cwd.copy(buffer, MAX_BUFFER_SIZE - 1);
-        buffer[MAX_BUFFER_SIZE - 1] = '\0'; // null terminate the buffer
-        cout << "sending cwd" << endl;
-        if (send(client, buffer, strlen(buffer), 0) < 0) {
-            cerr << "Couldn't send current working directory to the client" << endl;
-            break;
-        }
+        // memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
+        // cwd.copy(buffer, MAX_BUFFER_SIZE - 1);
+        // buffer[MAX_BUFFER_SIZE - 1] = '\0'; // null terminate the buffer
+        // cout << "sending cwd" << endl;
+        // if (send(client, buffer, strlen(buffer), 0) < 0) {
+        //     cerr << "Couldn't send current working directory to the client" << endl;
+        //     break;
+        // }
         
-        cout << "Starting..." << endl;
+        // cout << "Starting..." << endl;
         
         memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
         if (recv(client, buffer, MAX_BUFFER_SIZE, 0) < 0) {
             cerr << "Error receiving data from client!" << endl;
             break;
         }
-        cout << "AAAA-Starting..." << endl;
+        // cout << "AAAA-Starting..." << endl;
         string finalOutput = "";
         // if the client sends a non-empty string, process the command
         if (string(buffer) != "") {
@@ -326,9 +326,9 @@ int main() {
                 for (const auto& i : command_parsed) {
                     finalOutput = i + " -- ";
                 }
-                cout << "command_parsed.size(): " << command_parsed.size() << endl;
-                cout << "command_parsed[0]: " << command_parsed[0] << endl;
-                cout << "command_parsed[1]: " << command_parsed[1] << endl;
+                // cout << "command_parsed.size(): " << command_parsed.size() << endl;
+                // cout << "command_parsed[0]: " << command_parsed[0] << endl;
+                // cout << "command_parsed[1]: " << command_parsed[1] << endl;
 
                 if (command_parsed[0] == "ls") {
                     
@@ -340,7 +340,7 @@ int main() {
                 } else if (command_parsed[0] == "cd") {
                     filesystem.my_cd(command_parsed[1]);
                 }else if (command_parsed[0] == "mkdir"){
-                    filesystem.my_mkdir(command_parsed[2], stoi(command_parsed[3]));
+                    filesystem.my_mkdir(command_parsed[2]);
                 }else if (command_parsed[0] == "Lcp"){
                     filesystem.my_Lcp(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "lcp"){
@@ -370,18 +370,20 @@ int main() {
                 for (const auto& i : command_parsed) {
                     finalOutput += i + " -- ";
                 }
+                cwd = filesystem.my_getcwd();
             } catch (std::exception& e) {
                 finalOutput = e.what();
             }
         } 
-        cout << finalOutput << "[server-output]" << endl;
+
+        finalOutput = cwd + "[$&^]" + finalOutput;
+        // cout << finalOutput << "[server-output]" << endl;
         
         if (send(client, finalOutput.c_str(), finalOutput.size(), 0) < 0) {
             cerr << "Couldn't send an output to the client" << endl;
             break;
         } 
     }
-    cout << 3 << endl;
     // close the client socket
     close(client);
   }
