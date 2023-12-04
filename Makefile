@@ -13,6 +13,12 @@ SRC_DIR ?= ./fs
 # source files
 SRCS = $(wildcard $(SRC_DIR)/*.cpp)
 
+# exclude server.cpp from the list of source files
+SRCS := $(filter-out $(SRC_DIR)/server.cpp, $(SRCS))
+
+# additional source files for server
+SERVER_SRCS = $(SRC_DIR)/server.cpp $(SRC_DIR)/filesystem.cpp $(SRC_DIR)/bitmap.cpp $(SRC_DIR)/disk.cpp
+
 # objs
 OBJS = $(SRCS:.cpp=.o)
 
@@ -20,21 +26,21 @@ OBJS = $(SRCS:.cpp=.o)
 SHELL_MAIN_OBJ = $(SRC_DIR)/shell.o
 SERVER_MAIN_OBJ = $(SRC_DIR)/server.o
 
-all: $(SHELL_TARGET) $(SERVER_TARGET)
+all: $(SERVER_TARGET) $(SHELL_TARGET)
 
-$(SHELL_TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(SHELL_MAIN_OBJ)
+$(SHELL_TARGET):
+	$(CC) $(CFLAGS) $(SRC_DIR)/shell.cpp -o $(SHELL_TARGET)
 
-$(SERVER_TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(SERVER_MAIN_OBJ)
+$(SERVER_TARGET): $(SERVER_SRCS:.cpp=.o) $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(SERVER_MAIN_OBJ) $(SERVER_SRCS:.cpp=.o)
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-.PHONY:	clean distclean
+.PHONY: clean distclean
 
 clean:
 	-rm -f $(SRC_DIR)/*.o
 
-distclean:
-	-rm -f $(SRC_DIR)/*.o $(SHELL_TARGET) $(SERVER_TARGET)
+distclean: clean
+	-rm -f $(SHELL_TARGET) $(SERVER_TARGET)
