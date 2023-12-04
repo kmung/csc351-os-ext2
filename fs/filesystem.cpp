@@ -21,7 +21,7 @@ fs::fs(string vhd_path) {
     // Write your own disk path here
     string devicePath = vhd_path;
 
-    curPath = "init";
+    curPath = "root";
     curInum = 1;
 
     // Initialize the bitmaps
@@ -50,7 +50,7 @@ fs::fs(string vhd_path) {
     inodeBitmap.setBit(0, true);
 
     // the root directory
-    my_creat("init", 0777 | S_IFDIR);
+    my_creat("root", 0777 | S_IFDIR);
 }
 
 //******************************************************************************
@@ -456,6 +456,8 @@ bool fs::my_stat(const string& pathname, struct stat& buf) {
         // Read the inode from disk
         Inode inode;
         readInode(disk, inum, inode);
+        cout << "Inode: " << inode.num << endl;
+        cout << "Gid: " << inode.gid << endl;
 
         // Fill the stat structure
         buf.st_mode = inode.mode;
@@ -678,7 +680,8 @@ string fs::my_ls(){
     if (entries[0].nEntries > 2){
         for (int i = 2; i < entries[0].nEntries; i++) {
             struct stat fileStat;
-            if (my_stat(curPath, fileStat)) {
+            string newPath = curPath + "/" + entries[i].fname;
+            if (my_stat(newPath, fileStat)) {
                 string timeStr = ctime(&fileStat.st_mtime);
                 timeStr.erase(remove(timeStr.begin(), timeStr.end(), '\n'), timeStr.end());
 
@@ -797,7 +800,7 @@ string fs::my_cd(const string& name){
                     // The file exists, update current path and current inode
                     curPath += "/" + pathComponents[i];
                 } else {
-                    curPath = "init";
+                    curPath = "root";
                 }
                 curInum = entries[j].inode;
                 find = true;
@@ -818,7 +821,7 @@ string fs::my_cd(const string& name){
 
 //******************************************************************************
 string fs::my_cd(){
-    curPath = "init";
+    curPath = "root";
     curInum = 1;
     
     return curPath;
@@ -924,11 +927,15 @@ int fs::my_chown(const string& name, int owner, int group) {
     vector<dentry> parentDentry;
     findParent(disk, absPath, parentDentry, parentInum);
 
+    cout << "parentInum: " << parentInum << endl;
+
     // Check if the file exists in the parent directory
     for (int i = 0; i < parentDentry[0].nEntries; i++) {
         if (parentDentry[i].fname == filename) {
             inum = parentDentry[i].inode;
             rc = 0;
+            cout << "inum: " << inum << endl;
+            cout << "filename: " << parentDentry[i].fname << endl;
             break;
         }
     }
@@ -937,6 +944,8 @@ int fs::my_chown(const string& name, int owner, int group) {
         // Read the inode from disk
         Inode inode;
         readInode(disk, inum, inode);
+        cout << "inode: " << inode.num << endl;
+        cout << "Group before: " << inode.gid << endl;
 
         // Change the owner and group
         inode.uid = owner;
@@ -1108,12 +1117,16 @@ int fs::my_ln(const string& srcPath, const string& destPath){
     for (int i = 0; i < parentDentry[0].nEntries; i++) {
         if (parentDentry[i].fname == filename) {
             inum = parentDentry[i].inode;
+            cout << "Inum: " << inum << endl;
+            cout << "Filename: " << filename << endl;
             break;
         }
     }
     
     Inode srcnode;
     readInode(disk, inum, srcnode);
+    cout << "Srcnode: " << srcnode.num << endl;
+
     if(inum != -1){
         int fd = my_creat(absDestPath, srcnode.mode);
         if(fd != -1){
@@ -1131,6 +1144,7 @@ int fs::my_ln(const string& srcPath, const string& destPath){
             destnode.gid = srcnode.gid;
             destnode.blockAddress = srcnode.blockAddress;
             destnode.nlink = srcnode.nlink;
+            destnode.nlink--;
         
             writeInode(disk, fd, destnode);
 
@@ -1274,7 +1288,7 @@ string fs::my_getcwd(){
 }
 
 string fs::getAbsolutePath(const string& path) {
-    if (path.substr(0, 4) == "init") {
+    if (path.substr(0, 4) == "root") {
         return path; // path is already absolute
     } else {
         return curPath + "/" + path; // prepend the current working directory
