@@ -5,7 +5,7 @@
 .vscode
 
 # object files
-fs/*.o
+*.o
 
 #virtual hard disk
 *.vhd
