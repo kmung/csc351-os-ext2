@@ -53,7 +53,7 @@ void init_shell() {
   clearShell();
   cout << "\n\n\n\n\t********************************************" << endl;
   cout << "\n\n\t*****The Creative Awesome Shell - Crash*****" << endl;
-  cout << "\n\n\t*****Proceed with caution...*****" << endl;
+  cout << "\n\n\t*****Proceed with caution...****************" << endl;
   cout << "\n\n\t********************************************\n\n" << endl;
 }
 
@@ -142,8 +142,6 @@ void repl(int sock) {
     }else{
       firstTimeCalled = false;
     }
-      
-
   }
  }
 

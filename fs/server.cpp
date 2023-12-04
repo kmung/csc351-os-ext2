@@ -294,7 +294,7 @@ int main() {
    
     //cout << cwd << endl;
     
-    while (true) {
+    while (!shutdown) {
          // send current working directory to the client
          
         string cwd = filesystem.my_getcwd();
@@ -332,7 +332,7 @@ int main() {
                 }
 
                 if (command_parsed[0] == "ls") {
-                    
+
                     if (command_parsed.size() == 1) {
                         finalOutput += filesystem.my_ls();
                     } else {
@@ -389,11 +389,12 @@ int main() {
     }
     // close the client socket
     close(client);
+    cout << "Ending Inner" << endl;
   }
 
   // close the server socket
   close(server);
-  
+  cout << "Ending" << endl;
   return 0;
 }
 
