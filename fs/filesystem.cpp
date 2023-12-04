@@ -768,10 +768,11 @@ string fs::my_ls(const string& path){
 
 //******************************************************************************
 string fs::my_cd(const string& name){
+    string absPath = getAbsolutePath(name);
     stringstream ss;
 
     // Parse and save given file name(file path)
-    istringstream iss(name);
+    istringstream iss(absPath);
     string token;
     vector<string> pathComponents;
 
@@ -824,72 +825,86 @@ string fs::my_cd(){
 }
 
 //******************************************************************************
-int fs::my_mkdir(const string& path) {
-    return my_creat(path, 0644 | S_IFDIR);
+int fs::my_mkdir(const vector<string>& path) {
+    int rc = -1;
+    for(int i = 1; i < path.size(); i++){
+        string absPath = getAbsolutePath(path[i]);
+
+        string pathStr = absPath;
+        size_t pos = pathStr.find_last_of("/");
+        string filename = pathStr.substr(pos + 1);
+
+        rc = my_creat(absPath, 0644 | S_IFDIR);
+        
+    }
+    return rc;
 }
 
 
 //******************************************************************************
-int fs::my_rmdir(const string& path){
+int fs::my_rmdir(const vector<string>& path){
     int rc = -1;
+    for(int i = 1; i < path.size(); i++){
+        string absPath = getAbsolutePath(path[i]);
 
-    string pathStr = path;
-    size_t pos = pathStr.find_last_of("/");
-    string filename = pathStr.substr(pos + 1);
+        string pathStr = absPath;
+        size_t pos = pathStr.find_last_of("/");
+        string filename = pathStr.substr(pos + 1);
 
-    int parentInum;
-    int inum = -1;
-    vector<dentry> parentDentry;
-    findParent(disk, path, parentDentry, parentInum);
-    
-    // Check if the file exists in the parent directory
-    for (int i = 0; i < parentDentry[0].nEntries; i++) {
-        if (parentDentry[i].fname == filename) {
-            inum = parentDentry[i].inode;
-            rc = 0;
-            break;
+        int parentInum;
+        int inum = -1;
+        vector<dentry> parentDentry;
+        findParent(disk, absPath, parentDentry, parentInum);
+        
+        // Check if the file exists in the parent directory
+        for (int i = 0; i < parentDentry[0].nEntries; i++) {
+            if (parentDentry[i].fname == filename) {
+                inum = parentDentry[i].inode;
+                rc = 0;
+                break;
+            }
         }
-    }
 
-    if(rc == 0){
-        // Read the inode from disk
-        Inode inode;
-        readInode(disk, inum, inode);
+        if(rc == 0){
+            // Read the inode from disk
+            Inode inode;
+            readInode(disk, inum, inode);
 
-        // Check if the file is a directory
-        if (inode.mode & S_IFDIR) {
-            // Check if the directory is empty
-            vector<dentry> entries;
-            readDentry(disk, entries, inum);
-            if (entries[0].nEntries == 2) {
-                // Remove the directory entry from the parent directory
-                for (int i = 0; i < parentDentry[0].nEntries; i++) {
-                    if (parentDentry[i].fname == filename) {
-                        parentDentry.erase(parentDentry.begin() + i);
-                        parentDentry[0].nEntries--;
-                        break;
+            // Check if the file is a directory
+            if (inode.mode & S_IFDIR) {
+                // Check if the directory is empty
+                vector<dentry> entries;
+                readDentry(disk, entries, inum);
+                if (entries[0].nEntries == 2) {
+                    // Remove the directory entry from the parent directory
+                    for (int i = 0; i < parentDentry[0].nEntries; i++) {
+                        if (parentDentry[i].fname == filename) {
+                            parentDentry.erase(parentDentry.begin() + i);
+                            parentDentry[0].nEntries--;
+                            break;
+                        }
                     }
+
+                    // Write the updated parent directory entry to the disk
+                    writeDentry(disk, parentDentry, parentInum);
+
+                    // Free the inode and data block
+                    inodeBitmap.setBit(inum, false);
+                    blockBitmap.setBit(inode.blockAddress, false);
+                    blockBitmap.setBit(inode.blockAddress + 1, false);
+
+                } else {
+                    cout << "Directory is not empty" << endl;
+                    throw invalid_argument("Directory is not empty");
                 }
-
-                // Write the updated parent directory entry to the disk
-                writeDentry(disk, parentDentry, parentInum);
-
-                // Free the inode and data block
-                inodeBitmap.setBit(inum, false);
-                blockBitmap.setBit(inode.blockAddress, false);
-                blockBitmap.setBit(inode.blockAddress + 1, false);
-
             } else {
-                cout << "Directory is not empty" << endl;
-                throw invalid_argument("Directory is not empty");
+                cout << "File is not a directory" << endl;
+                throw invalid_argument("File is not a directory");
             }
         } else {
-            cout << "File is not a directory" << endl;
-            throw invalid_argument("File is not a directory");
+            cout << "rmdir File not found" << endl;
+            throw invalid_argument("File not found");
         }
-    } else {
-        cout << "rmdir File not found" << endl;
-        throw invalid_argument("File not found");
     }
 
     return rc;
@@ -898,15 +913,16 @@ int fs::my_rmdir(const string& path){
 //******************************************************************************
 int fs::my_chown(const string& name, int owner, int group) {
     int rc = -1;
+    string absPath = getAbsolutePath(name);
 
-    string pathStr = name;
+    string pathStr = absPath;
     size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
     int inum = -1;
     vector<dentry> parentDentry;
-    findParent(disk, name, parentDentry, parentInum);
+    findParent(disk, absPath, parentDentry, parentInum);
 
     // Check if the file exists in the parent directory
     for (int i = 0; i < parentDentry[0].nEntries; i++) {
@@ -972,16 +988,18 @@ int fs::my_cp(const string& srcPath, const string& destPath){
 
 //******************************************************************************
 int fs::my_mv(const string& srcPath, const string& destPath){
+    string absSrcPath = getAbsolutePath(srcPath);
+    string absDestPath = getAbsolutePath(destPath);
     int rc = my_cp(srcPath, destPath);
 
-    string pathStr = srcPath;
+    string pathStr = absSrcPath;
     size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     // Find the source file's parent directory and its dentry
     vector<dentry> srcParentDentries;
     int srcParentInum;
-    findParent(disk, srcPath, srcParentDentries, srcParentInum);
+    findParent(disk, absSrcPath, srcParentDentries, srcParentInum);
 
     // Find the dentry for the source file and remove it
     int indexToRemove = -1;
@@ -1004,148 +1022,88 @@ int fs::my_mv(const string& srcPath, const string& destPath){
 }
 
 //******************************************************************************
-int fs::my_rm(const string& name){
+int fs::my_rm(const vector<string>& name){
     int rc = -1;
+    
 
-    string pathStr = name;
-    size_t pos = pathStr.find_last_of("/");
-    string filename = pathStr.substr(pos + 1);
+    for(int i = 1; i < name.size(); i++){
+        string absPath = getAbsolutePath(name[i]);
+        string pathStr = absPath;
+        size_t pos = pathStr.find_last_of("/");
+        string filename = pathStr.substr(pos + 1);
 
-    int parentInum;
-    int inum = -1;
-    vector<dentry> parentDentry;
-    findParent(disk, name, parentDentry, parentInum);
+        int parentInum;
+        int inum = -1;
+        vector<dentry> parentDentry;
+        findParent(disk, absPath, parentDentry, parentInum);
 
-    // Check if the file exists in the parent directory
-    for (int i = 0; i < parentDentry[0].nEntries; i++) {
-        if (parentDentry[i].fname == filename) {
-            inum = parentDentry[i].inode;
-            rc = 0;
-            break;
+        // Check if the file exists in the parent directory
+        for (int i = 0; i < parentDentry[0].nEntries; i++) {
+            if (parentDentry[i].fname == filename) {
+                inum = parentDentry[i].inode;
+                rc = 0;
+                break;
+            }
         }
-    }
 
-    if(rc == 0){
-        // Read the inode from disk
-        Inode inode;
-        readInode(disk, inum, inode);
+        if(rc == 0){
+            // Read the inode from disk
+            Inode inode;
+            readInode(disk, inum, inode);
 
-        // Check if the file is a file
-        if (inode.mode) {
-            // Check if the directory is empty
-            vector<dentry> entries;
-            readDentry(disk, entries, inum);
-            if (entries[0].nEntries == 2) {
-                // Remove the directory entry from the parent directory
-                for (int i = 0; i < parentDentry[0].nEntries; i++) {
-                    if (parentDentry[i].fname == filename) {
-                        parentDentry.erase(parentDentry.begin() + i);
-                        parentDentry[0].nEntries--;
-                        break;
+            // Check if the file is a file
+            if (inode.mode) {
+                // Check if the directory is empty
+                vector<dentry> entries;
+                readDentry(disk, entries, inum);
+                if (entries[0].nEntries == 2) {
+                    // Remove the directory entry from the parent directory
+                    for (int i = 0; i < parentDentry[0].nEntries; i++) {
+                        if (parentDentry[i].fname == filename) {
+                            parentDentry.erase(parentDentry.begin() + i);
+                            parentDentry[0].nEntries--;
+                            break;
+                        }
                     }
+
+                    // Write the updated parent directory entry to the disk
+                    writeDentry(disk, parentDentry, parentInum);
+
+                    // Free the inode and data block
+                    inodeBitmap.setBit(inum, false);
+                    blockBitmap.setBit(inode.blockAddress, false);
+                    blockBitmap.setBit(inode.blockAddress + 1, false);
+
+                } else {
+                    cout << "Directory is not empty" << endl;
+                    throw invalid_argument("Directory is not empty");
                 }
-
-                // Write the updated parent directory entry to the disk
-                writeDentry(disk, parentDentry, parentInum);
-
-                // Free the inode and data block
-                inodeBitmap.setBit(inum, false);
-                blockBitmap.setBit(inode.blockAddress, false);
-                blockBitmap.setBit(inode.blockAddress + 1, false);
-
             } else {
-                cout << "Directory is not empty" << endl;
-                throw invalid_argument("Directory is not empty");
+                cout << "File is not a file" << endl;
+                throw invalid_argument("File is not a file");
             }
         } else {
-            cout << "File is not a file" << endl;
-            throw invalid_argument("File is not a file");
+            cout << "rmdir File not found" << endl;
+            throw invalid_argument("File not found");
         }
-    } else {
-        cout << "rmdir File not found" << endl;
-        throw invalid_argument("File not found");
     }
 
     return rc;
 }
-// int fs::my_rm(const vector<string>& names){
-//     int rc = -1;
-
-//     for (const string& name : names) {
-//         string pathStr = name;
-//         size_t pos = pathStr.find_last_of("/");
-//         string filename = pathStr.substr(pos + 1);
-
-//         int parentInum;
-//         int inum = -1;
-//         vector<dentry> parentDentry;
-//         findParent(disk, name, parentDentry, parentInum);
-
-//         // Check if the file exists in the parent directory
-//         for (int i = 0; i < parentDentry[0].nEntries; i++) {
-//             if (parentDentry[i].fname == filename) {
-//                 inum = parentDentry[i].inode;
-//                 rc = 0;
-//                 break;
-//             }
-//         }
-
-//         if(rc == 0){
-//             // Read the inode from disk
-//             Inode inode;
-//             readInode(disk, inum, inode);
-
-//             // Check if the file is a file
-//             if (inode.mode) {
-//                 // Check if the directory is empty
-//                 vector<dentry> entries;
-//                 readDentry(disk, entries, inum);
-//                 if (entries[0].nEntries == 2) {
-//                     // Remove the directory entry from the parent directory
-//                     for (int i = 0; i < parentDentry[0].nEntries; i++) {
-//                         if (parentDentry[i].fname == filename) {
-//                             parentDentry.erase(parentDentry.begin() + i);
-//                             parentDentry[0].nEntries--;
-//                             break;
-//                         }
-//                     }
-
-//                     // Write the updated parent directory entry to the disk
-//                     writeDentry(disk, parentDentry, parentInum);
-
-//                     // Free the inode and data block
-//                     inodeBitmap.setBit(inum, false);
-//                     blockBitmap.setBit(inode.blockAddress, false);
-//                     blockBitmap.setBit(inode.blockAddress + 1, false);
-
-//                 } else {
-//                     cout << "Directory is not empty" << endl;
-//                     throw invalid_argument("Directory is not empty");
-//                 }
-//             } else {
-//                 cout << "File is not a file" << endl;
-//                 throw invalid_argument("File is not a file");
-//             }
-//         } else {
-//             cout << "rmdir File not found" << endl;
-//             throw invalid_argument("File not found");
-//         }
-//     }
-
-//     return rc;
-//}
 
 //******************************************************************************
 int fs::my_ln(const string& srcPath, const string& destPath){
     int rc = -1;
-    string pathStr = srcPath;
+    string absSrcPath = getAbsolutePath(srcPath);
+    string absDestPath = getAbsolutePath(destPath);
+    string pathStr = absSrcPath;
     size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
 
     int parentInum;
     int inum = -1;
     vector<dentry> parentDentry;
-    findParent(disk, srcPath, parentDentry, parentInum);
+    findParent(disk, absSrcPath, parentDentry, parentInum);
     // Check if the file exists in the parent directory
     for (int i = 0; i < parentDentry[0].nEntries; i++) {
         if (parentDentry[i].fname == filename) {
@@ -1157,7 +1115,7 @@ int fs::my_ln(const string& srcPath, const string& destPath){
     Inode srcnode;
     readInode(disk, inum, srcnode);
     if(inum != -1){
-        int fd = my_creat(destPath, srcnode.mode);
+        int fd = my_creat(absDestPath, srcnode.mode);
         if(fd != -1){
             srcnode.nlink++;
             writeInode(disk, inum, srcnode);
@@ -1193,25 +1151,25 @@ int fs::my_ln(const string& srcPath, const string& destPath){
 }
 
 //******************************************************************************
-string fs::my_cat(const string& srcPath){
+string fs::my_cat(const vector<string>& srcPath){
     stringstream ss;
 
-    int fd = my_open(srcPath.c_str(), S_IRUSR | S_IWUSR);
-
-    if (fd != -1) {
-        struct stat fileStat;
-        if(my_stat(srcPath, fileStat)){
-            my_lseek(fd, 0, SEEK_SET);
-            // char buffer[fileStat.st_size];
-            // my_read(fd, buffer, fileStat.st_size);
-            // my_close(fd);
-            // ss << buffer << endl;
-            char* buffer = new char[fileStat.st_size + 1];  // Allocate one extra byte for the null terminator
-            my_read(fd, buffer, fileStat.st_size);
-            buffer[fileStat.st_size] = '\0';  // Null-terminate the buffer
-            my_close(fd);
-            ss << buffer << endl;
-            delete[] buffer;  // Don't forget to delete the buffer when you're done with it
+    for(int i = 1; i < srcPath.size(); i++){
+        string absSrcPath = getAbsolutePath(srcPath[i]);
+        int fd = my_open(absSrcPath.c_str(), S_IRUSR | S_IWUSR);
+        if(fd != -1){
+            struct stat fileStat;
+            if(my_stat(absSrcPath, fileStat)){
+                my_lseek(fd, 0, SEEK_SET);
+                char buffer[fileStat.st_size];
+                my_read(fd, buffer, fileStat.st_size);
+                my_close(fd);
+                ss << buffer << endl;
+            } else {
+                cout << "Failed to get stats for file: " << absSrcPath << endl;
+            }
+        } else {
+            cout << "Failed to open source file" << endl;
         }
     }
 
@@ -1220,6 +1178,7 @@ string fs::my_cat(const string& srcPath){
 
 //******************************************************************************
 int fs::my_lcp(const string& srcPath, const string& destPath) {
+    string absDestPath = getAbsolutePath(destPath);
     // Open the source file on the local filesystem
     ifstream srcFile(srcPath, ios::binary);
     if (!srcFile) {
@@ -1241,7 +1200,7 @@ int fs::my_lcp(const string& srcPath, const string& destPath) {
     srcFile.close();
 
     // Open the destination file on the custom filesystem
-    int fd = my_creat(destPath.c_str(), S_IRUSR | S_IWUSR);
+    int fd = my_creat(absDestPath.c_str(), S_IRUSR | S_IWUSR);
     if (fd == -1) {
         cout << "Failed to open destination file" << endl;
         return -1;
@@ -1261,8 +1220,10 @@ int fs::my_lcp(const string& srcPath, const string& destPath) {
 
 //******************************************************************************
 int fs::my_Lcp(const string& srcPath, const string& destPath) {
+    string absSrcPath = getAbsolutePath(srcPath);
+
     // Open the source file on the custom filesystem
-    int fd = my_open(srcPath.c_str(), S_IRUSR);
+    int fd = my_open(absSrcPath.c_str(), S_IRUSR);
     if (fd == -1) {
         cout << "Failed to open source file" << endl;
         return -1;

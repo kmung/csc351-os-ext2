@@ -186,9 +186,9 @@ vector<string> parse_command(const string& command, string& cwd){
                 }
             }
 
-            if (no_of_args < disassembled_command.size() - 1){
-                throw invalid_argument("Too many arguments");
-            }
+            // if (no_of_args < disassembled_command.size() - 1){
+            //     throw invalid_argument("Too many arguments");
+            // }
 
             if (no_of_required_args > disassembled_command.size() - 1){
                 throw invalid_argument("Too few arguments");
@@ -344,15 +344,15 @@ int main() {
                         filesystem.my_cd(command_parsed[1]);
                     }
                 }else if (command_parsed[0] == "mkdir"){
-                    filesystem.my_mkdir(command_parsed[1]);
+                    filesystem.my_mkdir(command_parsed);
                 }else if (command_parsed[0] == "Lcp"){
                     filesystem.my_Lcp(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "lcp"){
                     filesystem.my_lcp(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "rm"){
-                    filesystem.my_rm(command_parsed[1]);
+                    filesystem.my_rm(command_parsed);
                 }else if (command_parsed[0] == "rmdir"){
-                    filesystem.my_rmdir(command_parsed[1]);
+                    filesystem.my_rmdir(command_parsed);
                 }else if (command_parsed[0] == "chown"){
                     filesystem.my_chown(command_parsed[1], stoi(command_parsed[2]), stoi(command_parsed[3]));
                 }else if (command_parsed[0] == "cp"){
@@ -360,7 +360,7 @@ int main() {
                 }else if (command_parsed[0] == "mv"){
                     filesystem.my_mv(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "cat"){
-                    finalOutput += filesystem.my_cat(command_parsed[1]);
+                    finalOutput += filesystem.my_cat(command_parsed);
                 }else if (command_parsed[0] == "ln"){
                     filesystem.my_ln(command_parsed[1], command_parsed[2]);
                 } else if (command_parsed[0] == "shutdown"){

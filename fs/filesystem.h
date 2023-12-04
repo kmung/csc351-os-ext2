@@ -74,19 +74,19 @@ class fs {
 		string my_cd(const string& name);
 		string my_cd();
 		// Need absolute path
-		int my_mkdir(const string& name);
+		int my_mkdir(const vector<string>& name);
 		//keep track of current directory
 		string my_getcwd();
 		string getAbsolutePath(const string& path);
 
 
-		int my_rmdir(const string& name);
+		int my_rmdir(const vector<string>& name);
 		int my_chown(const string& name, int owner, int group);
 		int my_cp(const string& srcPath, const string& destPath);
 		int my_mv(const string& srcPath, const string& destPath);
-		int my_rm(const string& name);
+		int my_rm(const vector<string>& name);
 		int my_ln(const string& srcPath, const string& destPath);
-		string my_cat(const string& srcPath);
+		string my_cat(const vector<string>& srcPath);
 		int my_Lcp(const string& srcPath, const string& destPath);
 		int my_lcp(const string& srcPath, const string& destPath);
 };

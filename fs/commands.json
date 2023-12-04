@@ -83,6 +83,18 @@
                             "description": "The directory to create",
                             "type": "path",
                             "required": true
+                        },
+                        {
+                            "name": "additional_files 1",
+                            "description": "Additional files to remove",
+                            "type": "path",
+                            "required": false
+                        },
+                        {
+                            "name": "additional_files 2",
+                            "description": "Additional files to remove",
+                            "type": "path",
+                            "required": false
                         }
                 ]
           }
@@ -140,6 +152,18 @@
                         "description": "The file to print",
                         "type": "path",
                         "required": true
+                    },
+                    {
+                        "name": "additional_files 1",
+                        "description": "Additional files to remove",
+                        "type": "path",
+                        "required": false
+                    },
+                    {
+                        "name": "additional_files 2",
+                        "description": "Additional files to remove",
+                        "type": "path",
+                        "required": false
                     }
                 ]
             }
@@ -155,6 +179,18 @@
                         "description": "The directory to remove",
                         "type": "path",
                         "required": true
+                    },
+                    {
+                        "name": "additional_directory 1",
+                        "description": "Additional files to remove",
+                        "type": "path",
+                        "required": false
+                    },
+                    {
+                        "name": "additional_directory 2",
+                        "description": "Additional files to remove",
+                        "type": "path",
+                        "required": false
                     }
                 ]
             }
@@ -170,6 +206,18 @@
                         "description": "The file to remove",
                         "type": "path",
                         "required": true
+                    },
+                    {
+                        "name": "additional_files 1",
+                        "description": "Additional files to remove",
+                        "type": "path",
+                        "required": false
+                    },
+                    {
+                        "name": "additional_files 2",
+                        "description": "Additional files to remove",
+                        "type": "path",
+                        "required": false
                     }
                 ]
             }
