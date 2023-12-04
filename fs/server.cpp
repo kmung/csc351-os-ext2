@@ -171,13 +171,11 @@ vector<string> parse_command(const string& command, string& cwd){
 
     bool valid_command = false;
     vector<string> command_sent_to_filesystem;
-
     for (auto command_data: COMMAND_TEMPLATE["commands"]){
         bool required_argument_mode = true;
         if (command_data["name"] == disassembled_command[0]){
             valid_command = true;
             command_sent_to_filesystem.push_back(command_data["name"]);
-
             // disassembled_command.erase(disassembled_command.begin());
 
             int no_of_args = command_data["syntax"]["args"].size();
@@ -188,14 +186,9 @@ vector<string> parse_command(const string& command, string& cwd){
                 }
             }
 
-            cout << "no_of_args: " << no_of_args << endl;
-            for (const auto& i : disassembled_command) {
-                cout << i << endl;
-            }
-            
-            if (no_of_args < disassembled_command.size() - 1){
-                throw invalid_argument("Too many arguments");
-            }
+            // if (no_of_args < disassembled_command.size() - 1){
+            //     throw invalid_argument("Too many arguments");
+            // }
 
             if (no_of_required_args > disassembled_command.size() - 1){
                 throw invalid_argument("Too few arguments");
@@ -226,14 +219,19 @@ vector<string> parse_command(const string& command, string& cwd){
                     disassembled_command.erase(disassembled_command.begin());
                 }
             }
+            cout << "command_sent_to_filesystem.size(): " << command_sent_to_filesystem.size() << endl;
+            for (int i = 0; i<command_sent_to_filesystem.size(); i++){
+                cout << "command_sent_to_filesystem[" << i << "]: " << command_sent_to_filesystem[i] << endl;
+            }
+            break;
         }
     }
-
 
 
     if (!valid_command){
         throw invalid_argument("Invalid command");
     }
+
     return command_sent_to_filesystem;
 }
 
@@ -279,7 +277,7 @@ int main() {
    // buffer to store data
     char buffer[MAX_BUFFER_SIZE];
    
-  while (true) {
+  while (!shutdown) {
     // accept incoming connections
     struct sockaddr_in clientAddress;
     socklen_t clientAddrLen = sizeof(clientAddress);
@@ -294,7 +292,7 @@ int main() {
    
     //cout << cwd << endl;
     
-    while (!shutdown) {
+    while (true) {
          // send current working directory to the client
          
         string cwd = filesystem.my_getcwd();
@@ -314,6 +312,7 @@ int main() {
             cerr << "Error receiving data from client!" << endl;
             break;
         }
+        cout << "buffer: " << buffer << endl;
         // cout << "AAAA-Starting..." << endl;
         string finalOutput = "";
         // if the client sends a non-empty string, process the command
@@ -323,35 +322,37 @@ int main() {
 
             try {
                 vector<string> command_parsed = parse_command(command, path);
-                for (const auto& i : command_parsed) {
-                    finalOutput = i + " -- ";
-                }
+                // for (const auto& i : command_parsed) {
+                //     finalOutput = i + " -- ";
+                // }
                 cout << "command_parsed.size(): " << command_parsed.size() << endl;
                 for (int i = 0; i<command_parsed.size(); i++){
                     cout << "command_parsed[" << i << "]: " << command_parsed[i] << endl;
                 }
 
                 if (command_parsed[0] == "ls") {
-
+                    
                     if (command_parsed.size() == 1) {
                         finalOutput += filesystem.my_ls();
                     } else {
                         finalOutput += filesystem.my_ls(command_parsed[1]);
                     }
                 } else if (command_parsed[0] == "cd") {
-                    if(command_parsed.size() > 1){
+                    if(command_parsed.size() == 1){
+                        filesystem.my_cd();
+                    } else {
                         filesystem.my_cd(command_parsed[1]);
                     }
                 }else if (command_parsed[0] == "mkdir"){
-                    filesystem.my_mkdir(command_parsed[1]);
+                    filesystem.my_mkdir(command_parsed);
                 }else if (command_parsed[0] == "Lcp"){
                     filesystem.my_Lcp(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "lcp"){
                     filesystem.my_lcp(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "rm"){
-                    filesystem.my_rm(command_parsed[1]);
+                    filesystem.my_rm(command_parsed);
                 }else if (command_parsed[0] == "rmdir"){
-                    filesystem.my_rmdir(command_parsed[1]);
+                    filesystem.my_rmdir(command_parsed);
                 }else if (command_parsed[0] == "chown"){
                     filesystem.my_chown(command_parsed[1], stoi(command_parsed[2]), stoi(command_parsed[3]));
                 }else if (command_parsed[0] == "cp"){
@@ -359,7 +360,7 @@ int main() {
                 }else if (command_parsed[0] == "mv"){
                     filesystem.my_mv(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "cat"){
-                    finalOutput = filesystem.my_cat(command_parsed[1]);
+                    finalOutput += filesystem.my_cat(command_parsed);
                 }else if (command_parsed[0] == "ln"){
                     filesystem.my_ln(command_parsed[1], command_parsed[2]);
                 } else if (command_parsed[0] == "shutdown"){
@@ -370,9 +371,9 @@ int main() {
                     throw invalid_argument("[Internal Error] Invalid Command");
                 }
 
-                for (const auto& i : command_parsed) {
-                    finalOutput += i + " -- ";
-                }
+                // for (const auto& i : command_parsed) {
+                //     finalOutput += i + " -- ";
+                // }
                 cwd = filesystem.my_getcwd();
             } catch (std::exception& e) {
                 finalOutput = e.what();
@@ -389,12 +390,10 @@ int main() {
     }
     // close the client socket
     close(client);
-    cout << "Ending Inner" << endl;
   }
 
   // close the server socket
   close(server);
-  cout << "Ending" << endl;
+  
   return 0;
 }
-

@@ -6,8 +6,10 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/ioctl.h>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 #include <vector>
 #ifdef _WIN32
     #include <windows.h>
@@ -20,11 +22,6 @@ using namespace std;
 
 #define SERVER_PORT 8080
 #define MAX_BUFFER_SIZE 4096
-
-// clearing the shell using escape sequences
-void clearShell() {
-  cout << "\033[H\033[J";
-}
 
 std::vector<std::string> splitString(const std::string& s, const std::string& delimiters) {
     std::vector<std::string> tokens;
@@ -48,13 +45,34 @@ string replaceWord(std::string& str, const std::string& target, const std::strin
     return str;
 }
 
+int getTerminalWidth() {
+  struct winsize w;
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+  return w.ws_col;
+}
+
+// clearing the shell using escape sequences
+void clearShell() {
+  cout << "\033[H\033[J";
+}
+
+// center-align text within the terminal window
+void printCentered(const string& text) {
+  int terminalWidth = getTerminalWidth();
+  int padding = (terminalWidth - text.length()) / 2;
+
+  cout << setw(padding + text.length()) << text << endl;
+}
+
 // shell greeting during start up
 void init_shell() {
-  clearShell();
-  cout << "\n\n\n\n\t********************************************" << endl;
-  cout << "\n\n\t*****The Creative Awesome Shell - Crash*****" << endl;
-  cout << "\n\n\t*****Proceed with caution...****************" << endl;
-  cout << "\n\n\t********************************************\n\n" << endl;
+    clearShell();
+    cout << "\n\n\n\n";
+
+    printCentered("********************************************");
+    printCentered("***** The Creative Awesome Shell - Crash *****");
+    printCentered("***** Proceed with caution... ****************");
+    printCentered("********************************************\n\n");
 }
 
 
