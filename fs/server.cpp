@@ -277,7 +277,7 @@ int main() {
    // buffer to store data
     char buffer[MAX_BUFFER_SIZE];
    
-  while (true) {
+  while (!shutdown) {
     // accept incoming connections
     struct sockaddr_in clientAddress;
     socklen_t clientAddrLen = sizeof(clientAddress);
@@ -322,9 +322,9 @@ int main() {
 
             try {
                 vector<string> command_parsed = parse_command(command, path);
-                for (const auto& i : command_parsed) {
-                    finalOutput = i + " -- ";
-                }
+                // for (const auto& i : command_parsed) {
+                //     finalOutput = i + " -- ";
+                // }
                 cout << "command_parsed.size(): " << command_parsed.size() << endl;
                 for (int i = 0; i<command_parsed.size(); i++){
                     cout << "command_parsed[" << i << "]: " << command_parsed[i] << endl;
@@ -371,9 +371,9 @@ int main() {
                     throw invalid_argument("[Internal Error] Invalid Command");
                 }
 
-                for (const auto& i : command_parsed) {
-                    finalOutput += i + " -- ";
-                }
+                // for (const auto& i : command_parsed) {
+                //     finalOutput += i + " -- ";
+                // }
                 cwd = filesystem.my_getcwd();
             } catch (std::exception& e) {
                 finalOutput = e.what();
