@@ -43,4 +43,4 @@ clean:
 	-rm -f $(SRC_DIR)/*.o
 
 distclean: clean
-	-rm -f $(SHELL_TARGET) $(SERVER_TARGET)
+	-rm -f $(SHELL_TARGET) $(SERVER_TARGET) $(SRC_DIR)/virtual_disk.vhd
