@@ -306,6 +306,11 @@ int fs::my_creat(const string& fileName, mode_t mode) {
     size_t pos = fileName.find_last_of("//");
     string fName = fileName.substr(pos + 1);
 
+    // Check if the file name exceeds the maximum length
+    if (fName.size() > 120) {
+        throw invalid_argument("File name is too long\n");
+    }
+
     // Find a free inode and data block
     int inodeNum = inodeBitmap.findFirstFree();
     int blockNum = -1;
@@ -874,6 +879,14 @@ int fs::my_mkdir(const vector<string>& path) {
         size_t pos = pathStr.find_last_of("/");
         string filename = pathStr.substr(pos + 1);
 
+        int parentInum;
+        vector<dentry> parentDentry;
+        findParent(disk, absPath, parentDentry, parentInum);
+
+        if(parentDentry[0].nEntries > 30){
+            throw invalid_argument("Directory is full\n");
+        }
+
         rc = my_creat(absPath, 0644 | S_IFDIR);
         
     }
@@ -1090,7 +1103,7 @@ int fs::my_mv(const string& srcPath, const string& destPath){
     int rc = my_cp(srcPath, destPath);
 
     if(rc == -1){
-        throw invalid_argument("Failed to copy file\n");
+        throw invalid_argument("Failed to move file\n");
     }
 
     string pathStr = absSrcPath;
