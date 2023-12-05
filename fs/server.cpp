@@ -145,12 +145,6 @@ vector<string> disassemble_command(const string& command){
     return disassembled_command;
 }
 
-string json_path ="C:/Users/ssyak/OneDrive/Desktop/class/2023fall/CSC351/csc351-os-ext2/fs/commands.json";
-
-// TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
-ifstream f(json_path);
-json COMMAND_TEMPLATE = json::parse(f);
-
 // function to load commands from commands.json
 json loadCommands() {
   ifstream commandsFile("commands.json");
@@ -158,14 +152,29 @@ json loadCommands() {
 
   // check if the file is opened successfully
   if (!commandsFile.is_open()) {
-    
+    ifstream commandsFile("commands.json");
+    json commandsJson;
   }
-  commandsFile >> commandsJson;
+
+  if (!commandsFile.is_open()) {
+    cerr << "Error opening commands.json" << endl;
+    
+    return json();
+  }
+
+  try {
+    commandsFile >> commandsJson;
+  } catch (const json::parse_error& e) {
+    cerr << "error parsing commands.json" << e.what() << endl;
+
+    return json();
+  }
+  
   return commandsJson;
 }
 
 // call the commands
-// nlohmann::json commands = loadCommands();
+json COMMAND_TEMPLATE = loadCommands();
 
 vector<string> parse_command(const string& command, string& cwd){
     Path cwd_path = Path(cwd);
