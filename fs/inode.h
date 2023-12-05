@@ -8,12 +8,6 @@
 
 using namespace std;
 
-// special inode numbers
-// #define FS_BAD_INO 1         // bad blocks inode
-// #define FS_ROOT_INO 2        // root inode
-// #define FS_BOOT_LOADER_INO 5 // boot loader inode
-// #define FS_UNDEL_DIR_INO 6   // undelete directory inode
-
 // structure of inode
 struct Inode {
 	// file mode

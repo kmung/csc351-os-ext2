@@ -56,7 +56,6 @@ class fs {
 		
 	public:
 		fs(string vhd_path, int uid);
-		~fs();
 
 		// refer to https://man7.org/linux/man-pages/man2/syscalls.2.html for more
 		int my_creat(const string& path, mode_t mode);

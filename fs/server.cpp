@@ -151,12 +151,6 @@ vector<string> disassemble_command(const string& command){
     return disassembled_command;
 }
 
-// string json_path ="C:/Users/ssyak/OneDrive/Desktop/class/2023fall/CSC351/csc351-os-ext2/fs/commands.json";
-
-// // TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
-// ifstream f(json_path);
-// json COMMAND_TEMPLATE = json::parse(f);
-
 // function to load commands from commands.json
 json loadCommands(const string& directory) {
     string filePath = directory;
@@ -197,7 +191,6 @@ vector<string> parse_command(const string& command, string& cwd){
         if (command_data["name"] == disassembled_command[0]){
             valid_command = true;
             command_sent_to_filesystem.push_back(command_data["name"]);
-            // disassembled_command.erase(disassembled_command.begin());
 
             int no_of_args = command_data["syntax"]["args"].size();
             int no_of_required_args = 0;
@@ -228,14 +221,6 @@ vector<string> parse_command(const string& command, string& cwd){
 
                 if (!disassembled_command.empty()){
                     string argument = disassembled_command[0];
-                    // if (arg["type"] == "path"){
-                    //     Path path = Path(argument);
-                    //     argument = Path::make_absolute(cwd_path, path).format();
-                    // }else{
-                    //     cout << "Invalid argument type" << endl;
-                    //     throw invalid_argument("Invalid argument type\n "
-                    //                            "This is caused by an internal error in the command template");
-                    // }
                     command_sent_to_filesystem.push_back(argument);
                     disassembled_command.erase(disassembled_command.begin());
                 }
@@ -252,11 +237,12 @@ vector<string> parse_command(const string& command, string& cwd){
     return command_sent_to_filesystem;
 }
 
-// -----------------------------
+//******************************************************************************
 int main() {
 
   // create the server socket here
-  int server = socket(AF_INET, SOCK_STREAM, 0); // AF_INET is IPv4, SOCK_STREAM is TCP, 0 is IP
+  // AF_INET is IPv4, SOCK_STREAM is TCP, 0 is IP
+  int server = socket(AF_INET, SOCK_STREAM, 0);
   if (server < 0) {
     cerr << "Server socket creation failed!" << endl;
     return EXIT_FAILURE;
@@ -288,9 +274,6 @@ int main() {
    // shutdown flag
    bool shutdown = false;  
 
-   // state variable
-   // bool is_sent = false;  
-
    // buffer to store data
     char buffer[MAX_BUFFER_SIZE];
    
@@ -303,33 +286,16 @@ int main() {
         cerr << "Error accepting connection!" << endl;
         continue;
     }
-
-   // cout << "found client and connected" << endl;
-
-   
-    //cout << cwd << endl;
     
     while (true) {
-         // send current working directory to the client
-         
+        // send current working directory to the client
         string cwd = filesystem.my_getcwd();
-        // memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
-        // cwd.copy(buffer, MAX_BUFFER_SIZE - 1);
-        // buffer[MAX_BUFFER_SIZE - 1] = '\0'; // null terminate the buffer
-        // cout << "sending cwd" << endl;
-        // if (send(client, buffer, strlen(buffer), 0) < 0) {
-        //     cerr << "Couldn't send current working directory to the client" << endl;
-        //     break;
-        // }
-        
-        // cout << "Starting..." << endl;
         
         memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
         if (recv(client, buffer, MAX_BUFFER_SIZE, 0) < 0) {
             cerr << "Error receiving data from client!" << endl;
             break;
         }
-        // cout << "AAAA-Starting..." << endl;
         string finalOutput = "";
         // if the client sends a non-empty string, process the command
         if (string(buffer) != "") {
@@ -338,9 +304,6 @@ int main() {
 
             try {
                 vector<string> command_parsed = parse_command(command, path);
-                // for (const auto& i : command_parsed) {
-                //     finalOutput = i + " -- ";
-                // }
 
                 if (command_parsed[0] == "ls") {
                     
@@ -355,37 +318,33 @@ int main() {
                     } else {
                         filesystem.my_cd(command_parsed[1]);
                     }
-                }else if (command_parsed[0] == "mkdir"){
+                } else if (command_parsed[0] == "mkdir") {
                     filesystem.my_mkdir(command_parsed);
-                }else if (command_parsed[0] == "Lcp"){
+                } else if (command_parsed[0] == "Lcp") {
                     filesystem.my_Lcp(command_parsed[1], command_parsed[2]);
-                }else if (command_parsed[0] == "lcp"){
+                } else if (command_parsed[0] == "lcp") {
                     filesystem.my_lcp(command_parsed[1], command_parsed[2]);
-                }else if (command_parsed[0] == "rm"){
+                } else if (command_parsed[0] == "rm") {
                     filesystem.my_rm(command_parsed);
-                }else if (command_parsed[0] == "rmdir"){
+                } else if (command_parsed[0] == "rmdir") {
                     filesystem.my_rmdir(command_parsed);
-                }else if (command_parsed[0] == "chown"){
+                } else if (command_parsed[0] == "chown") {
                     filesystem.my_chown(command_parsed[1], stoi(command_parsed[2]), stoi(command_parsed[3]));
-                }else if (command_parsed[0] == "cp"){
+                } else if (command_parsed[0] == "cp") {
                     filesystem.my_cp(command_parsed[1], command_parsed[2]);
-                }else if (command_parsed[0] == "mv"){
+                } else if (command_parsed[0] == "mv") {
                     filesystem.my_mv(command_parsed[1], command_parsed[2]);
-                }else if (command_parsed[0] == "cat"){
+                } else if (command_parsed[0] == "cat") {
                     finalOutput += filesystem.my_cat(command_parsed) + "\n";
-                }else if (command_parsed[0] == "ln"){
+                } else if (command_parsed[0] == "ln") {
                     filesystem.my_ln(command_parsed[1], command_parsed[2]);
-                } else if (command_parsed[0] == "shutdown"){
+                } else if (command_parsed[0] == "shutdown") {
                     cout << "Shutting down the server..." << endl;
                     shutdown = true; // set the shutdown flag to true
-                    // break;
-                }else{
+                } else {
                     throw invalid_argument("[Internal Error] Invalid Command\n");
                 }
 
-                // for (const auto& i : command_parsed) {
-                //     finalOutput += i + " -- ";
-                // }
                 cwd = filesystem.my_getcwd();
             } catch (std::exception& e) {
                 finalOutput = e.what();
@@ -393,7 +352,6 @@ int main() {
         } 
 
         finalOutput = cwd + "[$&^]" + finalOutput;
-        // cout << finalOutput << "[server-output]" << endl;
         
         if (send(client, finalOutput.c_str(), finalOutput.size(), 0) < 0) {
             cerr << "Couldn't send an output to the client" << endl;

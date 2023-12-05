@@ -278,7 +278,7 @@ void readDentry(fstream& disk, vector<dentry>& entries, int inum){
     disk.seekg(node.blockAddress * BLOCK_SIZE, ios_base::beg);
 
     // Read the first dentry to get the number of entries
-	// The reason read the first dentry seperately is beause
+	// The reason read the first dentry seperately is because
 	// the number of entries is stored in the first dentry
     char buffer[DENTRY_SIZE];
     disk.read(buffer, DENTRY_SIZE);

@@ -56,12 +56,6 @@ fs::fs(string vhd_path, int uid) {
 }
 
 //******************************************************************************
-
-fs::~fs() {
-
-}
-
-//******************************************************************************
 void fs::writeInode(fstream& disk, int inodeNum, Inode& inode) {
     streampos curPosition = disk.tellp();
 
@@ -637,13 +631,6 @@ int fs::my_write(int fd, const char* buffer, int nbytes){
                     disk.seekp(curWritePosition, ios_base::beg);
                     disk.write(buffer, nbytes);
 
-                    // // Update inode
-                    // int overWriteSize;
-                    // if((rc + BLOCK_SIZE + node.size - curWritePosition) > nbytes){
-                    //     overWriteSize = nbytes;
-                    // } else {
-                    //     overWriteSize = rc + BLOCK_SIZE + node.size - curWritePosition;
-                    // }
                     node.size += nbytes;
                     node.blockAddress = rc / 4096;
                     writeInode(disk, fd, node);
