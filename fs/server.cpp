@@ -146,14 +146,6 @@ vector<string> disassemble_command(const string& command){
     return disassembled_command;
 }
 
-// std::filesystem::path filePath = "commands.json";
-
-// // Get the absolute path
-// std::filesystem::path absolutePath = std::filesystem::absolute(filePath);
-
-// string json_path = absolutePath.string();
-
-
 // // TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
 // ifstream f(json_path);
 // json COMMAND_TEMPLATE = json::parse(f);
