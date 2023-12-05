@@ -84,12 +84,8 @@ void repl(int sock) {
   // char cwd[MAX_BUFFER_SIZE]; // to store the current working directory
 
   string cwd = "";
-  // char cwd[MAX_BUFFER_SIZE]; // to store the current working directory
 
-  string cwd = "";
-
-  bool firstTimeCalled = true;
-  bool firstTimeCalled = true;
+   bool firstTimeCalled = true;
   while (true) {
     // cout << "breaking" <<endl;
     // break;
