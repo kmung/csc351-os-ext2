@@ -159,7 +159,7 @@ vector<string> disassemble_command(const string& command){
     return disassembled_command;
 }
 
-string json_path = "/home/ckmung/Documents/csc351/csc351-os-ext2/fs/commands.json";
+string json_path ="C:/Users/ssyak/OneDrive/Desktop/class/2023fall/CSC351/csc351-os-ext2/fs/commands.json";
 
 // TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
 ifstream f(json_path);
