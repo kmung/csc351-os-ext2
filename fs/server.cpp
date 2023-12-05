@@ -23,17 +23,6 @@ using json = nlohmann::json;
 #define PORT 8080 // port 8080 is common application web server port
 #define MAX_BUFFER_SIZE 4096 // max buffer size for incoming data
 
-// function to load commands from commands.json
-nlohmann::json loadCommands() {
-  ifstream commandsFile("commands.json");
-  nlohmann::json commandsJson;
-  commandsFile >> commandsJson;
-  return commandsJson;
-}
-
-// call the commands
-// nlohmann::json commands = loadCommands();
-
 class Path {
     vector<string> disassembled_path;
     bool is_absolute = false;
@@ -161,6 +150,22 @@ string json_path ="C:/Users/ssyak/OneDrive/Desktop/class/2023fall/CSC351/csc351-
 // TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
 ifstream f(json_path);
 json COMMAND_TEMPLATE = json::parse(f);
+
+// function to load commands from commands.json
+json loadCommands() {
+  ifstream commandsFile("commands.json");
+  json commandsJson;
+
+  // check if the file is opened successfully
+  if (!commandsFile.is_open()) {
+    
+  }
+  commandsFile >> commandsJson;
+  return commandsJson;
+}
+
+// call the commands
+// nlohmann::json commands = loadCommands();
 
 vector<string> parse_command(const string& command, string& cwd){
     Path cwd_path = Path(cwd);
