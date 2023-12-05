@@ -13,3 +13,6 @@ fs/*.o
 #builds
 shell
 server
+
+#dump files
+*stackdump

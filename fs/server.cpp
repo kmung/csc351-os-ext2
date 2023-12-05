@@ -8,15 +8,18 @@
 #include <cstring>
 #ifdef _WIN32
     #include <winsock2.h>
+    #include <Windows.h>
 #else
     #include <unistd.h>
     #include <arpa/inet.h> //The arpa/inet.h header file contains definitions for internet operations, from IBM
     #include <sys/socket.h> //The sys/socket.h header file contains sockets definitions. from IBM
+    #include <filesystem>
 #endif
 #include "libraries/json.hpp"
 #include "libraries/json_fwd.hpp"
 #include <fstream>
 #include <sstream>
+#include <limits.h>
 #include "filesystem.h"
 
 using namespace std;
@@ -25,17 +28,6 @@ using json = nlohmann::json;
 // define port number to listen to
 #define PORT 8080 // port 8080 is common application web server port
 #define MAX_BUFFER_SIZE 4096 // max buffer size for incoming data
-
-// function to load commands from commands.json
-nlohmann::json loadCommands() {
-  ifstream commandsFile("commands.json");
-  nlohmann::json commandsJson;
-  commandsFile >> commandsJson;
-  return commandsJson;
-}
-
-// call the commands
-// nlohmann::json commands = loadCommands();
 
 class Path {
     vector<string> disassembled_path;
@@ -159,11 +151,40 @@ vector<string> disassemble_command(const string& command){
     return disassembled_command;
 }
 
-string json_path ="C:/Users/ssyak/OneDrive/Desktop/class/2023fall/CSC351/csc351-os-ext2/fs/commands.json";
+// string json_path ="C:/Users/ssyak/OneDrive/Desktop/class/2023fall/CSC351/csc351-os-ext2/fs/commands.json";
 
-// TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
-ifstream f(json_path);
-json COMMAND_TEMPLATE = json::parse(f);
+// // TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
+// ifstream f(json_path);
+// json COMMAND_TEMPLATE = json::parse(f);
+
+// function to load commands from commands.json
+json loadCommands(const string& directory) {
+    string filePath = directory;
+    
+    #ifdef _WIN32
+        // windows
+        filePath += "\\commands.json";
+    #else
+        // linux
+        filePath += "/commands.json";
+    #endif
+
+    if (filePath.empty()) {
+        throw invalid_argument("Failed to construct json file path");
+    }
+
+    ifstream commandsFile(filePath);
+    if (!commandsFile.is_open()) {
+        throw invalid_argument("Failed to open commands.json: " + filePath);
+    }
+
+    json commandsJson;
+    commandsFile >> commandsJson;
+
+    return commandsJson;
+}
+
+json COMMAND_TEMPLATE = loadCommands("./fs/");
 
 vector<string> parse_command(const string& command, string& cwd){
     Path cwd_path = Path(cwd);
@@ -262,7 +283,7 @@ int main() {
   }
 
     // create a filesystem object
-   fs filesystem("virtual_disk.vhd", 3);
+   fs filesystem("virtual_disk.vhd", 351);
 
    // shutdown flag
    bool shutdown = false;  

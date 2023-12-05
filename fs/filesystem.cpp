@@ -985,6 +985,11 @@ int fs::my_cp(const string& srcPath, const string& destPath){
     if(fd != -1){
         struct stat fileStat;
         if(my_stat(absSrcPath, fileStat)){
+            if (fileStat.st_mode & S_IFDIR) {
+                cerr << "Cannot copy directory" << endl;
+                return -1;
+            }
+
             if(!my_lseek(fd, 0, SEEK_SET)){
                 cout << "Failed to move file pointer" << endl;
                 return -1;
@@ -994,12 +999,15 @@ int fs::my_cp(const string& srcPath, const string& destPath){
                 cerr << "Permission denied" << endl;
                 return -1;
             }
+
             if(fileStat.st_size > remainDatablocks * 4096){
                 cerr << "Not enough space" << endl;
                 return -1;
             } else {
                 remainDatablocks -= (fileStat.st_size / 4096) + 1;
             }
+
+            
 
             if(fileStat.st_size > 1024){
                 vector<char> buffer(fileStat.st_size);

@@ -42,13 +42,13 @@ using namespace std;
 // Although the size of superblock is 1KB, it still use the entire space of first block
 struct SuperBlock {
 
-		uint64_t memory_size = MEMORY_SIZE;
-		uint64_t block_size = BLOCK_SIZE;
-		uint64_t nBlocks = MEMORY_SIZE / BLOCK_SIZE;
-		uint64_t inode_size = INODE_SIZE;
-		uint64_t nInodeBlocks = NINODE_BLOCKS;
-		uint64_t nInodes = BLOCK_SIZE * NINODE_BLOCKS / INODE_SIZE;
-		uint64_t first_data_block = NINODE_BLOCKS + 1;
+	uint64_t memory_size = MEMORY_SIZE;
+	uint64_t block_size = BLOCK_SIZE;
+	uint64_t nBlocks = MEMORY_SIZE / BLOCK_SIZE;
+	uint64_t inode_size = INODE_SIZE;
+	uint64_t nInodeBlocks = NINODE_BLOCKS;
+	uint64_t nInodes = BLOCK_SIZE * NINODE_BLOCKS / INODE_SIZE;
+	uint64_t first_data_block = NINODE_BLOCKS + 1;
 
 };
 

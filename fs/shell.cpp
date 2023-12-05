@@ -14,23 +14,22 @@
 #else
     #include <unistd.h>
     #include <arpa/inet.h> 
+    #include <sys/socket.h>
+    #include <sys/ioctl.h>
 #endif
+#include <iomanip>
+#include <io.h>
 
 using namespace std;
 
 #define SERVER_PORT 8080
 #define MAX_BUFFER_SIZE 4096
 
-// clearing the shell using escape sequences
-void clearShell() {
-  cout << "\033[H\033[J";
-}
-
-std::vector<std::string> splitString(const std::string& s, const std::string& delimiters) {
-    std::vector<std::string> tokens;
+vector<string> splitString(const string& s, const string& delimiters) {
+    vector<string> tokens;
     size_t start = 0, end = 0;
 
-    while ((end = s.find_first_of(delimiters, start)) != std::string::npos) {
+    while ((end = s.find_first_of(delimiters, start)) != string::npos) {
         tokens.push_back(s.substr(start, end - start));
         start = end + 1;
     }
@@ -39,22 +38,49 @@ std::vector<std::string> splitString(const std::string& s, const std::string& de
     return tokens;
 }
 
-string replaceWord(std::string& str, const std::string& target, const std::string& replacement) {
+string replaceWord(string& str, const string& target, const string& replacement) {
     size_t pos = 0;
-    while ((pos = str.find(target, pos)) != std::string::npos) {
+    while ((pos = str.find(target, pos)) != string::npos) {
         str = str.replace(pos, target.length(), replacement);
         pos += replacement.length();
     }
     return str;
 }
 
+int getTerminalWidth() {
+  #ifdef _WIN32
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+    return csbi.srWindow.Right - csbi.srWindow.Left + 1;
+  #else
+    struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+    return w.ws_col;
+  #endif
+}
+
+// clearing the shell using escape sequences
+void clearShell() {
+  cout << "\033[H\033[J";
+}
+
+// center-align the text within the terminal window
+void printCentered(const string& text) {
+  int width = getTerminalWidth();
+  int padding = (width - text.length()) / 2;
+
+  cout << setw(padding + text.length()) << text << endl;
+}
+
 // shell greeting during start up
 void init_shell() {
-  clearShell();
-  cout << "\n\n\n\n\t********************************************" << endl;
-  cout << "\n\n\t*****The Creative Awesome Shell - Crash*****" << endl;
-  cout << "\n\n\t*****Proceed with caution...*****" << endl;
-  cout << "\n\n\t********************************************\n\n" << endl;
+    clearShell();
+    cout << "\n\n\n\n";
+
+    printCentered("********************************************");
+    printCentered("**** The Creative Awesome Shell - Crash ****");
+    printCentered("**** Proceed with caution... ***************");
+    printCentered("********************************************\n");
 }
 
 
