@@ -17,6 +17,8 @@
     #include <unistd.h>
     #include <arpa/inet.h> 
 #endif
+#include <thread>
+#include <chrono>
 
 using namespace std;
 
@@ -69,10 +71,14 @@ void init_shell() {
     clearShell();
     cout << "\n\n\n\n";
 
-    printCentered("********************************************");
-    printCentered("**** The Creative Awesome Shell - Crash ****");
-    printCentered("**** Proceed with caution... ***************");
-    printCentered("********************************************\n");
+    const string colorRed = "\033[1;31m";
+    const string colorYellow = "\033[1;33m";
+    const string colorReset = "\033[0m";
+
+    printCentered(colorRed + "********************************************");
+    printCentered(colorYellow + "**** The Creative Awesome Shell - Crash ****");
+    printCentered(colorYellow + "**** Proceed with caution... ***************");
+    printCentered(colorRed + "********************************************\n");
 }
 
 
