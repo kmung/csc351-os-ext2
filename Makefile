@@ -31,8 +31,11 @@ all: $(SERVER_TARGET) $(SHELL_TARGET)
 $(SHELL_TARGET):
 	$(CC) $(CFLAGS) $(SRC_DIR)/shell.cpp -o $(SHELL_TARGET)
 
-$(SERVER_TARGET): $(SERVER_SRCS:.cpp=.o) $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(SERVER_MAIN_OBJ) $(SERVER_SRCS:.cpp=.o)
+$(SERVER_MAIN_OBJ): $(SRC_DIR)/%.o: $(SRC_DIR)/%.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(SERVER_TARGET): $(SERVER_MAIN_OBJ) $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $(SERVER_MAIN_OBJ) $(OBJS)
 
 %.o: %.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
