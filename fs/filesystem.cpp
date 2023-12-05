@@ -67,7 +67,7 @@ void fs::writeInode(fstream& disk, int inodeNum, Inode& inode) {
 
     // Check if the disk file is open
     if (!disk.is_open()) {
-        throw invalid_argument("Disk file is not open");
+        throw invalid_argument("Disk file is not open\n");
     }
 
     // Calculate the position of the inode in the file
@@ -78,7 +78,7 @@ void fs::writeInode(fstream& disk, int inodeNum, Inode& inode) {
 
     // Check if the seek failed
     if (disk.fail()) {
-        throw invalid_argument("Failed to seek to inode");
+        throw invalid_argument("Failed to seek to inode\n");
     }
 
     // Write the inode data
@@ -86,7 +86,7 @@ void fs::writeInode(fstream& disk, int inodeNum, Inode& inode) {
 
     // Check if the write failed
     if (disk.fail()) {
-        throw invalid_argument("Failed to write inode");
+        throw invalid_argument("Failed to write inode\n");
     }
 
     disk.seekp(curPosition, ios_base::beg);
@@ -289,20 +289,17 @@ int fs::allocateMem(int allocateSize, int inum, int& curMaxBlocks) {
 int fs::my_creat(const string& fileName, mode_t mode) {
     // Check if the disk file is open
     if (!disk.is_open()) {
-        cout << "Disk file is not open" << endl;
-        throw invalid_argument("Disk file is not open");
+        throw invalid_argument("Disk file is not open\n");
     }
 
     // Check if the file name is empty
     if (fileName.empty()) {
-        cout << "File name is empty" << endl;
-        throw invalid_argument("File name is empty");
+        throw invalid_argument("File name is empty\n");
     }
 
     // Check if the file already exists
     if (my_open(fileName.c_str(), mode) != -1) {
-        cout << "File already exists: " << fileName << endl;
-        throw invalid_argument("File already exists: " + fileName);
+        throw invalid_argument("File already exists: " + fileName + "\n");
     }
 
     // Extract the file name from the file path
@@ -370,7 +367,6 @@ int fs::my_creat(const string& fileName, mode_t mode) {
         writeStartDentry(disk, inodeNum, parentInum);
 
     } else {
-        cout << "Parent directory not found" << endl;
         // If failed to find parent directory, free the inode and data block
         // Inode still remains on the disk, but it will be overwritten later
         inodeBitmap.setBit(inodeNum, false);
@@ -378,7 +374,7 @@ int fs::my_creat(const string& fileName, mode_t mode) {
         blockBitmap.setBit(blockNum + 1, false);
 
         // Throw an error
-        throw invalid_argument("Parent directory not found");
+        throw invalid_argument("Parent directory not found\n");
     }
 
     // Mark openFdTable to indicate the file is opened
@@ -423,7 +419,7 @@ bool fs::my_close(int fd){
     bool rc = false;
 
     if(find(openFdTable.begin(), openFdTable.end(), fd) == openFdTable.end()){
-        cout << "File descriptor not found" << endl;
+        throw invalid_argument("File descriptor not found\n");
     } else {
         // Remove the file descriptor from the open file table
         openFdTable.erase(find(openFdTable.begin(), openFdTable.end(), fd));
@@ -472,8 +468,7 @@ bool fs::my_stat(const string& pathname, struct stat& buf) {
         buf.st_mtime = inode.mtime;
         buf.st_ctime = inode.ctime;
     } else {
-        cout << "File not found" << endl;
-        throw invalid_argument("File not found");
+        throw invalid_argument("File not found\n");
     }
 
     return rc;
@@ -538,8 +533,7 @@ int fs::my_lseek(int fd, off_t offset, int whence) {
             disk.seekg(position, ios_base::beg);
             break;
         default:
-            cout << "Invalid whence value" << endl;
-            position = -1;
+            throw invalid_argument("Invalid whence value\n");
         }
     }
 
@@ -587,26 +581,19 @@ int fs::my_read(int fd, char* buffer, int nbytes) {
                     buffer[rc] = '\0';
 
                     if(disk.fail()){
-                        if (disk.eof()) {
-                            cout << "Failed to read file: Reached end of file" << endl;
-                        } else if (disk.bad()) {
-                            cout << "Failed to read file: Bad input or I/O error" << endl;
-                        } else {
-                            cout << "Failed to read file: Unknown error" << endl;
-                        }
-                        throw invalid_argument("Failed to read file");
+                        throw invalid_argument("Failed to read file\n");
                     }
                 } else {
-                    cout << "Current position is not on the right spot" << endl;
+                    throw invalid_argument("Current position is not on the right spot\n");
                 }
             } else {
-                cout << "File is not readable" << endl;
+                throw invalid_argument("File is not readable\n");
             }
         } else {
-            cout << "File is not opened" << endl;
+            throw invalid_argument("File is not opened\n");
         }
     } else {
-        cout << "Invalid file descriptor" << endl;
+        throw invalid_argument("Invalid file descriptor\n");
     }
 
     return rc;
@@ -660,16 +647,16 @@ int fs::my_write(int fd, const char* buffer, int nbytes){
                     readInode(disk, fd, newNode);
 
                 } else {
-                    cout << "Failed to allocate memory" << endl;
+                    throw invalid_argument("Failed to allocate memory\n");
                 }
             } else {
-                cout << "File is not writable" << endl;
+                throw invalid_argument("File is not writable\n");
             }
         } else {
-            cout << "File is not opened" << endl;
+            throw invalid_argument("File is not opened\n");
         }
     } else {
-        cout << "Invalid file descriptor" << endl;
+        throw invalid_argument("Invalid file descriptor\n");
     }
 
     return rc;
@@ -708,7 +695,7 @@ string fs::my_ls(){
                     << ' ' << timeStr
                     << ' ' << entries[i].fname << endl;
             } else {
-                cout << "Failed to get stats for file: " << curPath << endl;
+                throw invalid_argument("Failed to get stats for file\n");
             }
         }
     }
@@ -765,7 +752,7 @@ string fs::my_ls(const string& path){
                     << ' ' << timeStr
                     << ' ' << entries[i].fname << endl;
             } else {
-                cout << "Failed to get stats for file: " << newPath << endl;
+                throw invalid_argument("Failed to get stats for file\n");
             }
         }
     }
@@ -793,6 +780,52 @@ string fs::my_cd(const string& name){
     int temp = curInum;
     curInum = 0;
     bool find = false;
+
+    if(name == ".."){
+        if (curPath == "root") {
+            curInum = 1;
+            throw invalid_argument("Already at root directory\n");
+        }
+
+        istringstream iss(curPath);
+        string token;
+        vector<string> pathComponents;
+
+        while (getline(iss, token, '/')) {
+            if (!token.empty()) {
+                pathComponents.push_back(token);
+            }
+        }
+
+        for (int i = 0; i < pathComponents.size() - 1; i++) {
+            vector<dentry> entries;
+            readDentry(disk, entries, curInum);
+            
+            // Check if the file exists in the current directory
+            for (int j = 1; j < entries[0].nEntries; j++) {
+                
+                if (entries[j].fname == pathComponents[i]) {
+                    if(curInum != 0){
+                        // The file exists, update current path and current inode
+                        curPath += "/" + pathComponents[i];
+                    } else {
+                        curPath = "root";
+                    }
+                    curInum = entries[j].inode;
+                    find = true;
+                    break;
+                } 
+            }
+            if(!find){
+                curInum = temp;
+                throw invalid_argument("File not found\n");
+            }
+        }
+
+        ss << curPath << endl;
+        return ss.str();
+    }
+
     for (int i = 0; i < pathComponents.size(); i++) {
         vector<dentry> entries;
         readDentry(disk, entries, curInum);
@@ -814,8 +847,7 @@ string fs::my_cd(const string& name){
         }
         if(!find){
             curInum = temp;
-            cout << "File not found" << endl;
-            throw invalid_argument("File not found");
+            throw invalid_argument("File not found\n");
         }
     }
 
@@ -842,7 +874,7 @@ int fs::my_mkdir(const vector<string>& path) {
         size_t pos = pathStr.find_last_of("/");
         string filename = pathStr.substr(pos + 1);
 
-        rc = my_creat(absPath, S_IRUSR| S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH | S_IFDIR);
+        rc = my_creat(absPath, 0644 | S_IFDIR);
         
     }
     return rc;
@@ -885,8 +917,7 @@ int fs::my_rmdir(const vector<string>& path){
             my_stat(absPath, fileStat);
 
             if(inode.uid != uid){
-                cerr << "Permission denied" << endl;
-                return -1;
+                throw invalid_argument("Permission denied\n");
             }
 
             // Check if the file is a directory
@@ -913,16 +944,13 @@ int fs::my_rmdir(const vector<string>& path){
                     blockBitmap.setBit(inode.blockAddress + 1, false);
 
                 } else {
-                    cout << "Directory is not empty" << endl;
-                    throw invalid_argument("Directory is not empty");
+                    throw invalid_argument("Directory is not empty\n");
                 }
             } else {
-                cout << "File is not a directory" << endl;
-                throw invalid_argument("File is not a directory");
+                throw invalid_argument("File is not a directory\n");
             }
         } else {
-            cout << "rmdir File not found" << endl;
-            throw invalid_argument("File not found");
+            throw invalid_argument("File not found\n");
         }
     }
 
@@ -958,9 +986,9 @@ int fs::my_chown(const string& name, int owner, int group) {
         readInode(disk, inum, inode);
 
         if(inode.uid != uid){
-                cerr << "Permission denied" << endl;
-                return -1;
-            }
+            throw invalid_argument("Permission denied\n");
+            
+        }
 
         // Change the owner and group
         inode.uid = owner;
@@ -969,8 +997,7 @@ int fs::my_chown(const string& name, int owner, int group) {
         // Write the inode to disk
         writeInode(disk, inum, inode);
     } else {
-        cout << "Chown File not found" << endl;
-        throw invalid_argument("File not found");
+        throw invalid_argument("File not found\n");
     }
 
     return rc;
@@ -986,23 +1013,23 @@ int fs::my_cp(const string& srcPath, const string& destPath){
         struct stat fileStat;
         if(my_stat(absSrcPath, fileStat)){
             if (fileStat.st_mode & S_IFDIR) {
-                cerr << "Cannot copy directory" << endl;
-                return -1;
+                throw invalid_argument("Cannot copy directory\n");
+                
             }
 
             if(!my_lseek(fd, 0, SEEK_SET)){
-                cout << "Failed to move file pointer" << endl;
-                return -1;
+                throw invalid_argument("Failed to move file pointer\n");
+                
             }
 
             if(fileStat.st_uid != uid){
-                cerr << "Permission denied" << endl;
-                return -1;
+                throw invalid_argument("Permission denied\n");
+                
             }
 
             if(fileStat.st_size > remainDatablocks * 4096){
-                cerr << "Not enough space" << endl;
-                return -1;
+                throw invalid_argument("Not enough space\n");
+                
             } else {
                 remainDatablocks -= (fileStat.st_size / 4096) + 1;
             }
@@ -1024,7 +1051,7 @@ int fs::my_cp(const string& srcPath, const string& destPath){
                     my_close(newFd);
                     rc = 0;
                 } else {
-                    cout << "Failed to create destination file" << endl;
+                    throw invalid_argument("Failed to create destination file\n");
                 }
             } else {
                     char buffer[fileStat.st_size];
@@ -1042,15 +1069,15 @@ int fs::my_cp(const string& srcPath, const string& destPath){
                     my_close(newFd);
                     rc = 0;
                 } else {
-                    cout << "Failed to create destination file" << endl;
+                    throw invalid_argument("Failed to create destination file\n");
                 }
             }
             
         } else {
-            cout << "Failed to get stats for file: " << srcPath << endl;
+            throw invalid_argument("Failed to get stats for file: " + absSrcPath + "\n");
         }
     } else {
-        cout << "Failed to open source file" << endl;
+        throw invalid_argument("Failed to open source file\n");
     }
     
     return rc;
@@ -1063,7 +1090,7 @@ int fs::my_mv(const string& srcPath, const string& destPath){
     int rc = my_cp(srcPath, destPath);
 
     if(rc == -1){
-        return -1;
+        throw invalid_argument("Failed to copy file\n");
     }
 
     string pathStr = absSrcPath;
@@ -1090,8 +1117,8 @@ int fs::my_mv(const string& srcPath, const string& destPath){
     readInode(disk, srcInum, srcInode);
 
     if(srcInode.uid != uid){
-        cerr << "Permission denied" << endl;
-        return -1;
+        throw invalid_argument("Permission denied\n");
+        
     }
 
 
@@ -1135,10 +1162,14 @@ int fs::my_rm(const vector<string>& name){
             // Read the inode from disk
             Inode inode;
             readInode(disk, inum, inode);
+            if (inode.mode & S_IFDIR) {
+                throw invalid_argument("Cannot delete directory\n");
+                
+            }
 
             if(inode.uid != uid){
-                cerr << "Permission denied" << endl;
-                return -1;
+                throw invalid_argument("Permission denied\n");
+                
             }
 
             // Check if the file is a file
@@ -1165,16 +1196,13 @@ int fs::my_rm(const vector<string>& name){
                     blockBitmap.setBit(inode.blockAddress + 1, false);
 
                 } else {
-                    cout << "Directory is not empty" << endl;
-                    throw invalid_argument("Directory is not empty");
+                    throw invalid_argument("Directory is not empty\n");
                 }
             } else {
-                cout << "File is not a file" << endl;
-                throw invalid_argument("File is not a file");
+                throw invalid_argument("File is not a file\n");
             }
         } else {
-            cout << "rmdir File not found" << endl;
-            throw invalid_argument("File not found");
+            throw invalid_argument("File not found\n");
         }
     }
 
@@ -1205,8 +1233,11 @@ int fs::my_ln(const string& srcPath, const string& destPath){
     Inode srcnode;
     readInode(disk, inum, srcnode);
     if(srcnode.uid != uid){
-        cerr << "Permission denied" << endl;
-        return -1;
+        throw invalid_argument("Permission denied\n");
+    }
+
+    if (srcnode.mode & S_IFDIR) {
+        throw invalid_argument("Cannot link directory\n");
     }
 
     if(inum != -1){
@@ -1237,10 +1268,10 @@ int fs::my_ln(const string& srcPath, const string& destPath){
 
             rc = fd;
         } else {
-            cout << "Failed to create destination file" << endl;
+            throw invalid_argument("Failed to create destination file\n");
         }
     } else {
-        cout << "File is not a file" << endl;
+        throw invalid_argument("File not found\n");
     }    
 
     return rc;
@@ -1260,12 +1291,12 @@ string fs::my_cat(const vector<string>& srcPath){
                 char buffer[fileStat.st_size];
                 my_read(fd, buffer, fileStat.st_size);
                 my_close(fd);
-                ss << buffer << endl;
+                ss << buffer;
             } else {
-                cout << "Failed to get stats for file: " << absSrcPath << endl;
+                throw invalid_argument("Failed to get stats for file: " + absSrcPath + "\n");
             }
         } else {
-            cout << "Failed to open source file" << endl;
+            throw invalid_argument("Failed to open source file\n");
         }
     }
 
@@ -1278,8 +1309,8 @@ int fs::my_lcp(const string& srcPath, const string& destPath) {
     // Open the source file on the local filesystem
     ifstream srcFile(srcPath, ios::binary);
     if (!srcFile) {
-        cout << "Failed to open source file" << endl;
-        return -1;
+        throw invalid_argument("Failed to open source file\n");
+        
     }
     // Get the size of the source file
     srcFile.seekg(0, ios::end);
@@ -1289,15 +1320,15 @@ int fs::my_lcp(const string& srcPath, const string& destPath) {
     // Read the source file into a buffer
     vector<char> buffer(size);
     if (!srcFile.read(buffer.data(), size)) {
-        cout << "Failed to read source file" << endl;
-        return -1;
+        throw invalid_argument("Failed to read source file\n");
+        
     }
     // Close the source file
     srcFile.close();
 
     if(size > remainDatablocks * 4096){
-        cerr << "Not enough space" << endl;
-        return -1;
+        throw invalid_argument("Not enough space\n");
+        
     } else {
         remainDatablocks -= (size / 4096) + 1;
     }
@@ -1305,8 +1336,8 @@ int fs::my_lcp(const string& srcPath, const string& destPath) {
     // Open the destination file on the custom filesystem
     int fd = my_creat(absDestPath.c_str(), S_IRUSR | S_IWUSR);
     if (fd == -1) {
-        cout << "Failed to open destination file" << endl;
-        return -1;
+        throw invalid_argument("Failed to create destination file\n");
+        
     }
     
     // Seek to the end of the destination file
@@ -1314,8 +1345,8 @@ int fs::my_lcp(const string& srcPath, const string& destPath) {
 
     // Write the buffer to the destination file
     if(my_write(fd, buffer.data(), size) == -1){
-        cerr << "Failed to write to destination file" << endl;
-        return -1;
+        throw invalid_argument("Failed to write to destination file\n");
+        
     }
 
     // Close the destination file
@@ -1331,8 +1362,8 @@ int fs::my_Lcp(const string& srcPath, const string& destPath) {
     // Open the source file on the custom filesystem
     int fd = my_open(absSrcPath.c_str(), S_IRUSR);
     if (fd == -1) {
-        cout << "Failed to open source file" << endl;
-        return -1;
+        throw invalid_argument("Failed to open source file\n");
+        
     }
 
     // Get the size of the source file
@@ -1350,22 +1381,22 @@ int fs::my_Lcp(const string& srcPath, const string& destPath) {
     // Check if the destination file exists on the host filesystem
     ifstream testFile(destPath);
     if (testFile.good()) {
-        cout << "Destination file already exists" << endl;
-        return -1;
+        throw invalid_argument("Destination file already exists\n");
+        
     }
     testFile.close();
 
     // Create a new file on the host filesystem
     ofstream destFile(destPath, ios::binary);
     if (!destFile) {
-        cout << "Failed to create destination file" << endl;
-        return -1;
+        throw invalid_argument("Failed to create destination file\n");
+        
     }
 
     // Write the buffer to the new file
     if (!destFile.write(buffer.data(), size)) {
-        cout << "Failed to write to destination file" << endl;
-        return -1;
+        throw invalid_argument("Failed to write to destination file\n");
+        
     }
 
     // Close the destination file

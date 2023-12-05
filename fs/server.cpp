@@ -58,13 +58,13 @@ public:
 
     static void make_sure_path_is_valid(string& path) {
         if (path.empty()) {
-            throw invalid_argument("Path cannot be empty");
+            throw invalid_argument("Path cannot be empty\n");
         }
         if (path[path.size() - 1] == '/') {
-            throw invalid_argument("Path cannot end with '/'");
+            throw invalid_argument("Path cannot end with '/'\n");
         }
         if (path.find("//") != string::npos) {
-            throw invalid_argument("Path cannot contain '//'");
+            throw invalid_argument("Path cannot contain '//'\n");
         }
     }
 
@@ -105,7 +105,7 @@ public:
 
         // Make sure cwd is a directory
         if (!is_folder(cwd)) {
-            throw invalid_argument("cwd must be a directory");
+            throw invalid_argument("cwd must be a directory\n");
         }
 
         vector<string> new_path = cwd.disassembled_path;
@@ -170,12 +170,12 @@ json loadCommands(const string& directory) {
     #endif
 
     if (filePath.empty()) {
-        throw invalid_argument("Failed to construct json file path");
+        throw invalid_argument("Failed to construct json file path\n");
     }
 
     ifstream commandsFile(filePath);
     if (!commandsFile.is_open()) {
-        throw invalid_argument("Failed to open commands.json: " + filePath);
+        throw invalid_argument("Failed to open commands.json: " + filePath + "\n");
     }
 
     json commandsJson;
@@ -207,12 +207,12 @@ vector<string> parse_command(const string& command, string& cwd){
                 }
             }
 
-            // if (no_of_args < disassembled_command.size() - 1){
-            //     throw invalid_argument("Too many arguments");
-            // }
+            if (no_of_args < static_cast<int>(disassembled_command.size()) - 1){
+                throw invalid_argument("Too many arguments\n");
+            }
 
-            if (no_of_required_args > disassembled_command.size() - 1){
-                throw invalid_argument("Too few arguments");
+            if (no_of_required_args > static_cast<int>(disassembled_command.size()) - 1){
+                throw invalid_argument("Too few arguments\n");
             }
 
             disassembled_command.erase(disassembled_command.begin());
@@ -223,7 +223,7 @@ vector<string> parse_command(const string& command, string& cwd){
 
                 if (!required_argument_mode && arg["required"]){
                     throw invalid_argument("Required argument cannot be followed by optional argument\n "
-                                           "This is caused by an internal error in the command template");
+                                           "This is caused by an internal error in the command template\n");
                 }
 
                 if (!disassembled_command.empty()){
@@ -246,7 +246,7 @@ vector<string> parse_command(const string& command, string& cwd){
 
 
     if (!valid_command){
-        throw invalid_argument("Invalid command");
+        throw invalid_argument("Invalid command\n");
     }
 
     return command_sent_to_filesystem;
@@ -289,7 +289,7 @@ int main() {
    bool shutdown = false;  
 
    // state variable
-   bool is_sent = false;  
+   // bool is_sent = false;  
 
    // buffer to store data
     char buffer[MAX_BUFFER_SIZE];
@@ -372,7 +372,7 @@ int main() {
                 }else if (command_parsed[0] == "mv"){
                     filesystem.my_mv(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "cat"){
-                    finalOutput += filesystem.my_cat(command_parsed);
+                    finalOutput += filesystem.my_cat(command_parsed) + "\n";
                 }else if (command_parsed[0] == "ln"){
                     filesystem.my_ln(command_parsed[1], command_parsed[2]);
                 } else if (command_parsed[0] == "shutdown"){
@@ -380,7 +380,7 @@ int main() {
                     shutdown = true; // set the shutdown flag to true
                     // break;
                 }else{
-                    throw invalid_argument("[Internal Error] Invalid Command");
+                    throw invalid_argument("[Internal Error] Invalid Command\n");
                 }
 
                 // for (const auto& i : command_parsed) {
