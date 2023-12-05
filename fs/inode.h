@@ -23,9 +23,9 @@ struct Inode {
 	// number of hard links count
 	int nlink;
 	// 16 bits of Owner Uid
-	short uid;
+	int uid;
 	// 16 bits of Group Id
-	short gid;
+	int gid;
 	// size in bytes
 	int size;
 	// access time

@@ -219,10 +219,6 @@ vector<string> parse_command(const string& command, string& cwd){
                     disassembled_command.erase(disassembled_command.begin());
                 }
             }
-            cout << "command_sent_to_filesystem.size(): " << command_sent_to_filesystem.size() << endl;
-            for (int i = 0; i<command_sent_to_filesystem.size(); i++){
-                cout << "command_sent_to_filesystem[" << i << "]: " << command_sent_to_filesystem[i] << endl;
-            }
             break;
         }
     }
@@ -266,7 +262,7 @@ int main() {
   }
 
     // create a filesystem object
-   fs filesystem("virtual_disk.vhd");
+   fs filesystem("virtual_disk.vhd", 3);
 
    // shutdown flag
    bool shutdown = false;  
@@ -312,7 +308,6 @@ int main() {
             cerr << "Error receiving data from client!" << endl;
             break;
         }
-        cout << "buffer: " << buffer << endl;
         // cout << "AAAA-Starting..." << endl;
         string finalOutput = "";
         // if the client sends a non-empty string, process the command
@@ -325,10 +320,6 @@ int main() {
                 // for (const auto& i : command_parsed) {
                 //     finalOutput = i + " -- ";
                 // }
-                cout << "command_parsed.size(): " << command_parsed.size() << endl;
-                for (int i = 0; i<command_parsed.size(); i++){
-                    cout << "command_parsed[" << i << "]: " << command_parsed[i] << endl;
-                }
 
                 if (command_parsed[0] == "ls") {
                     

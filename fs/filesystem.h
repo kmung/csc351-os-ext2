@@ -32,6 +32,8 @@ class fs {
 
 		string curPath;
 		int curInum;
+		int remainDatablocks;
+		int uid;
 
 		// Write new Inode
 		void writeInode(fstream& disk, int inum, Inode& inode);
@@ -53,7 +55,7 @@ class fs {
 		int allocateMem(int allocateSize, int inum, int& curMaxBlocks);
 		
 	public:
-		fs(string vhd_path);
+		fs(string vhd_path, int uid);
 		~fs();
 
 		// refer to https://man7.org/linux/man-pages/man2/syscalls.2.html for more

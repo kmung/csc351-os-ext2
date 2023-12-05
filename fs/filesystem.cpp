@@ -17,12 +17,14 @@
 
 using namespace std;
 
-fs::fs(string vhd_path) {
+fs::fs(string vhd_path, int uid) {
     // Write your own disk path here
     string devicePath = vhd_path;
+    this->uid = uid;
 
     curPath = "root";
     curInum = 1;
+    remainDatablocks = NDATA_BLOCKS;
 
     // Initialize the bitmaps
     inodeBitmap = Bitmap(NINODES);
@@ -338,7 +340,7 @@ int fs::my_creat(const string& fileName, mode_t mode) {
     // Initialize the inode
     // Gid and Uid is not using for this assignment, set them to 1000 for now
     // As blocknum is the index of the data block, add it to the first data block address
-    Inode newInode{mode, inodeNum, 2, 0, 0, 0, time(nullptr), time(nullptr), time(nullptr), FIRST_DATA_BLOCK + blockNum};
+    Inode newInode{mode, inodeNum, 2, uid, 0, 0, time(nullptr), time(nullptr), time(nullptr), FIRST_DATA_BLOCK + blockNum};
 
     // Write the inode to disk
     writeInode(disk, inodeNum, newInode);
@@ -381,6 +383,8 @@ int fs::my_creat(const string& fileName, mode_t mode) {
 
     // Mark openFdTable to indicate the file is opened
     openFdTable.push_back(inodeNum);
+
+    remainDatablocks -= 2;
 
     // Return the inode number as the file descriptor
     return inodeNum;
@@ -456,8 +460,6 @@ bool fs::my_stat(const string& pathname, struct stat& buf) {
         // Read the inode from disk
         Inode inode;
         readInode(disk, inum, inode);
-        cout << "Inode: " << inode.num << endl;
-        cout << "Gid: " << inode.gid << endl;
 
         // Fill the stat structure
         buf.st_mode = inode.mode;
@@ -613,6 +615,7 @@ int fs::my_read(int fd, char* buffer, int nbytes) {
 //******************************************************************************
 int fs::my_write(int fd, const char* buffer, int nbytes){
     int rc = -1;
+
     bool fileOpened = (find(openFdTable.begin(), openFdTable.end(), fd) != openFdTable.end());
     streampos curWritePosition = disk.tellp();
 
@@ -625,6 +628,8 @@ int fs::my_write(int fd, const char* buffer, int nbytes){
     char data_buffer[node.size];
     disk.seekg((node.blockAddress + 1) * BLOCK_SIZE, ios_base::beg);
     disk.read(data_buffer, node.size);
+
+    
 
     // Check if fd is valid, file is opened, current position is on the right spot and the file is writable
     // Current position can locate at the end of the file
@@ -858,6 +863,15 @@ int fs::my_rmdir(const vector<string>& path){
         int inum = -1;
         vector<dentry> parentDentry;
         findParent(disk, absPath, parentDentry, parentInum);
+
+        Inode parentInode;
+        readInode(disk, parentInum, parentInode);
+
+        if(parentInode.uid != uid){
+            if(parentInode.mode & S_IWOTH){
+                throw invalid_argument("Permission denied");
+            }
+        }
         
         // Check if the file exists in the parent directory
         for (int i = 0; i < parentDentry[0].nEntries; i++) {
@@ -872,6 +886,12 @@ int fs::my_rmdir(const vector<string>& path){
             // Read the inode from disk
             Inode inode;
             readInode(disk, inum, inode);
+
+            if(inode.uid != uid){
+                if(inode.mode & S_IXOTH){
+                    throw invalid_argument("Permission denied");
+                }
+            }
 
             // Check if the file is a directory
             if (inode.mode & S_IFDIR) {
@@ -927,15 +947,11 @@ int fs::my_chown(const string& name, int owner, int group) {
     vector<dentry> parentDentry;
     findParent(disk, absPath, parentDentry, parentInum);
 
-    cout << "parentInum: " << parentInum << endl;
-
     // Check if the file exists in the parent directory
     for (int i = 0; i < parentDentry[0].nEntries; i++) {
         if (parentDentry[i].fname == filename) {
             inum = parentDentry[i].inode;
             rc = 0;
-            cout << "inum: " << inum << endl;
-            cout << "filename: " << parentDentry[i].fname << endl;
             break;
         }
     }
@@ -1213,6 +1229,13 @@ int fs::my_lcp(const string& srcPath, const string& destPath) {
     // Close the source file
     srcFile.close();
 
+    if(size > remainDatablocks * 4096){
+        cerr << "Not enough space" << endl;
+        return -1;
+    } else {
+        remainDatablocks -= (size / 4096) + 1;
+    }
+
     // Open the destination file on the custom filesystem
     int fd = my_creat(absDestPath.c_str(), S_IRUSR | S_IWUSR);
     if (fd == -1) {
@@ -1224,7 +1247,10 @@ int fs::my_lcp(const string& srcPath, const string& destPath) {
     my_lseek(fd, 0, SEEK_SET);
 
     // Write the buffer to the destination file
-    my_write(fd, buffer.data(), size);
+    if(my_write(fd, buffer.data(), size) == -1){
+        cerr << "Failed to write to destination file" << endl;
+        return -1;
+    }
 
     // Close the destination file
     my_close(fd);
