@@ -11,6 +11,7 @@
 #include <vector>
 #ifdef _WIN32
     #include <windows.h>
+    #include <io.h>
 #else
     #include <unistd.h>
     #include <arpa/inet.h> 
@@ -18,7 +19,6 @@
     #include <sys/ioctl.h>
 #endif
 #include <iomanip>
-#include <io.h>
 
 using namespace std;
 
