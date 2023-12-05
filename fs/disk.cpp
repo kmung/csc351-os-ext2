@@ -54,8 +54,6 @@ int createDisk(const string& devicePath){
 	// Initialize all bytes to 0
 	char block[block_size] = {0}; 
 
-    cout << num_blocks << " " << block_size << endl;
-    cout << memory_size << endl;
 	// Start from 1, as 0 is used by superblock
 	for (size_t i = 1; i < num_blocks; ++i) { 
 		disk.write(block, block_size);

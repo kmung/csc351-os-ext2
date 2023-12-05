@@ -6,10 +6,13 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
-#include <unistd.h>
-#include <syscall.h>
-#include <arpa/inet.h> //The arpa/inet.h header file contains definitions for internet operations, from IBM
-#include <sys/socket.h> //The sys/socket.h header file contains sockets definitions. from IBM
+#ifdef _WIN32
+    #include <winsock2.h>
+#else
+    #include <unistd.h>
+    #include <arpa/inet.h> //The arpa/inet.h header file contains definitions for internet operations, from IBM
+    #include <sys/socket.h> //The sys/socket.h header file contains sockets definitions. from IBM
+#endif
 #include "libraries/json.hpp"
 #include "libraries/json_fwd.hpp"
 #include <fstream>
@@ -172,13 +175,13 @@ vector<string> parse_command(const string& command, string& cwd){
 
     bool valid_command = false;
     vector<string> command_sent_to_filesystem;
-
     for (auto command_data: COMMAND_TEMPLATE["commands"]){
         bool required_argument_mode = true;
         if (command_data["name"] == disassembled_command[0]){
             valid_command = true;
             command_sent_to_filesystem.push_back(command_data["name"]);
-            disassembled_command.erase(disassembled_command.begin());
+            // disassembled_command.erase(disassembled_command.begin());
+
             int no_of_args = command_data["syntax"]["args"].size();
             int no_of_required_args = 0;
             for (const auto& arg: command_data["syntax"]["args"]){
@@ -187,17 +190,16 @@ vector<string> parse_command(const string& command, string& cwd){
                 }
             }
 
-            if (no_of_args < disassembled_command.size()){
-                throw invalid_argument("Too many arguments");
-            }
+            // if (no_of_args < disassembled_command.size() - 1){
+            //     throw invalid_argument("Too many arguments");
+            // }
 
-            if (no_of_required_args > disassembled_command.size()){
+            if (no_of_required_args > disassembled_command.size() - 1){
                 throw invalid_argument("Too few arguments");
             }
 
+            disassembled_command.erase(disassembled_command.begin());
             for (const auto& arg: command_data["syntax"]["args"]){
-
-                cout << arg << endl;
                 if (required_argument_mode && !arg["required"]){
                     required_argument_mode = false;
                 }
@@ -209,28 +211,27 @@ vector<string> parse_command(const string& command, string& cwd){
 
                 if (!disassembled_command.empty()){
                     string argument = disassembled_command[0];
-                    if (arg["type"] == "path"){
-                        Path path = Path(argument);
-                        argument = Path::make_absolute(cwd_path, path).format();
-                    }else{
-                        throw invalid_argument("Invalid argument type\n "
-                                               "This is caused by an internal error in the command template");
-                    }
+                    // if (arg["type"] == "path"){
+                    //     Path path = Path(argument);
+                    //     argument = Path::make_absolute(cwd_path, path).format();
+                    // }else{
+                    //     cout << "Invalid argument type" << endl;
+                    //     throw invalid_argument("Invalid argument type\n "
+                    //                            "This is caused by an internal error in the command template");
+                    // }
                     command_sent_to_filesystem.push_back(argument);
                     disassembled_command.erase(disassembled_command.begin());
                 }
-            }
-            cout << "command_sent_to_filesystem.size(): " << command_sent_to_filesystem.size() << endl;
-            for (int i = 0; i<command_sent_to_filesystem.size(); i++){
-                cout << "command_sent_to_filesystem[" << i << "]: " << command_sent_to_filesystem[i] << endl;
             }
             break;
         }
     }
 
+
     if (!valid_command){
         throw invalid_argument("Invalid command");
     }
+
     return command_sent_to_filesystem;
 }
 
@@ -267,7 +268,7 @@ int main() {
   }
 
     // create a filesystem object
-   fs filesystem("virtual_disk.vhd");
+   fs filesystem("virtual_disk.vhd", 3);
 
    // shutdown flag
    bool shutdown = false;  
@@ -278,7 +279,7 @@ int main() {
    // buffer to store data
     char buffer[MAX_BUFFER_SIZE];
    
-  while (true) {
+  while (!shutdown) {
     // accept incoming connections
     struct sockaddr_in clientAddress;
     socklen_t clientAddrLen = sizeof(clientAddress);
@@ -297,51 +298,58 @@ int main() {
          // send current working directory to the client
          
         string cwd = filesystem.my_getcwd();
-        memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
-        cwd.copy(buffer, MAX_BUFFER_SIZE - 1);
-        buffer[MAX_BUFFER_SIZE - 1] = '\0'; // null terminate the buffer
-        cout << "sending cwd" << endl;
-        if (send(client, buffer, strlen(buffer), 0) < 0) {
-            cerr << "Couldn't send current working directory to the client" << endl;
-            break;
-        }
+        // memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
+        // cwd.copy(buffer, MAX_BUFFER_SIZE - 1);
+        // buffer[MAX_BUFFER_SIZE - 1] = '\0'; // null terminate the buffer
+        // cout << "sending cwd" << endl;
+        // if (send(client, buffer, strlen(buffer), 0) < 0) {
+        //     cerr << "Couldn't send current working directory to the client" << endl;
+        //     break;
+        // }
         
-        cout << "Starting..." << endl;
+        // cout << "Starting..." << endl;
         
         memset(buffer, 0, MAX_BUFFER_SIZE); // clear the buffer
         if (recv(client, buffer, MAX_BUFFER_SIZE, 0) < 0) {
             cerr << "Error receiving data from client!" << endl;
             break;
         }
-        cout << "AAAA-Starting..." << endl;
+        // cout << "AAAA-Starting..." << endl;
         string finalOutput = "";
         // if the client sends a non-empty string, process the command
         if (string(buffer) != "") {
             string command = string(buffer);
-            cout << "Received command: " << command << endl;
             string path = string("/system/user");
 
             try {
                 vector<string> command_parsed = parse_command(command, path);
+                // for (const auto& i : command_parsed) {
+                //     finalOutput = i + " -- ";
+                // }
 
                 if (command_parsed[0] == "ls") {
+                    
                     if (command_parsed.size() == 1) {
-                        finalOutput = filesystem.my_ls();
+                        finalOutput += filesystem.my_ls();
                     } else {
-                        finalOutput = filesystem.my_ls(command_parsed[1]);
+                        finalOutput += filesystem.my_ls(command_parsed[1]);
                     }
                 } else if (command_parsed[0] == "cd") {
-                    filesystem.my_cd(command_parsed[1]);
+                    if(command_parsed.size() == 1){
+                        filesystem.my_cd();
+                    } else {
+                        filesystem.my_cd(command_parsed[1]);
+                    }
                 }else if (command_parsed[0] == "mkdir"){
-                    filesystem.my_mkdir(command_parsed[1], NULL);
+                    filesystem.my_mkdir(command_parsed);
                 }else if (command_parsed[0] == "Lcp"){
                     filesystem.my_Lcp(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "lcp"){
                     filesystem.my_lcp(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "rm"){
-                    filesystem.my_rm(command_parsed[1]);
+                    filesystem.my_rm(command_parsed);
                 }else if (command_parsed[0] == "rmdir"){
-                    filesystem.my_rmdir(command_parsed[1]);
+                    filesystem.my_rmdir(command_parsed);
                 }else if (command_parsed[0] == "chown"){
                     filesystem.my_chown(command_parsed[1], stoi(command_parsed[2]), stoi(command_parsed[3]));
                 }else if (command_parsed[0] == "cp"){
@@ -349,25 +357,28 @@ int main() {
                 }else if (command_parsed[0] == "mv"){
                     filesystem.my_mv(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "cat"){
-                    finalOutput = filesystem.my_cat(command_parsed[1]);
+                    finalOutput += filesystem.my_cat(command_parsed);
                 }else if (command_parsed[0] == "ln"){
                     filesystem.my_ln(command_parsed[1], command_parsed[2]);
                 } else if (command_parsed[0] == "shutdown"){
                     cout << "Shutting down the server..." << endl;
                     shutdown = true; // set the shutdown flag to true
-                    break;
+                    // break;
                 }else{
                     throw invalid_argument("[Internal Error] Invalid Command");
                 }
 
-                for (const auto& i : command_parsed) {
-                    finalOutput += i + " -- ";
-                }
+                // for (const auto& i : command_parsed) {
+                //     finalOutput += i + " -- ";
+                // }
+                cwd = filesystem.my_getcwd();
             } catch (std::exception& e) {
                 finalOutput = e.what();
             }
         } 
-        cout << finalOutput << "[server-output]" << endl;
+
+        finalOutput = cwd + "[$&^]" + finalOutput;
+        // cout << finalOutput << "[server-output]" << endl;
         
         if (send(client, finalOutput.c_str(), finalOutput.size(), 0) < 0) {
             cerr << "Couldn't send an output to the client" << endl;
@@ -376,11 +387,6 @@ int main() {
     }
     // close the client socket
     close(client);
-
-    // break the loop if the shutdown flag is set to true
-    if (shutdown) {
-      break;
-    }
   }
 
   // close the server socket
