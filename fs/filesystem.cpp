@@ -842,7 +842,7 @@ int fs::my_mkdir(const vector<string>& path) {
         size_t pos = pathStr.find_last_of("/");
         string filename = pathStr.substr(pos + 1);
 
-        rc = my_creat(absPath, 0644 | S_IFDIR);
+        rc = my_creat(absPath, S_IRUSR| S_IWUSR | S_IXUSR | S_IRGRP | S_IROTH | S_IFDIR);
         
     }
     return rc;
@@ -866,12 +866,7 @@ int fs::my_rmdir(const vector<string>& path){
 
         Inode parentInode;
         readInode(disk, parentInum, parentInode);
-
-        if(parentInode.uid != uid){
-            if(parentInode.mode & S_IWOTH){
-                throw invalid_argument("Permission denied");
-            }
-        }
+        int octalMode = std::stoi(std::to_string(parentInode.mode), nullptr, 8);
         
         // Check if the file exists in the parent directory
         for (int i = 0; i < parentDentry[0].nEntries; i++) {
@@ -886,11 +881,12 @@ int fs::my_rmdir(const vector<string>& path){
             // Read the inode from disk
             Inode inode;
             readInode(disk, inum, inode);
+            struct stat fileStat;
+            my_stat(absPath, fileStat);
 
             if(inode.uid != uid){
-                if(inode.mode & S_IXOTH){
-                    throw invalid_argument("Permission denied");
-                }
+                cerr << "Permission denied" << endl;
+                return -1;
             }
 
             // Check if the file is a directory
@@ -960,8 +956,11 @@ int fs::my_chown(const string& name, int owner, int group) {
         // Read the inode from disk
         Inode inode;
         readInode(disk, inum, inode);
-        cout << "inode: " << inode.num << endl;
-        cout << "Group before: " << inode.gid << endl;
+
+        if(inode.uid != uid){
+                cerr << "Permission denied" << endl;
+                return -1;
+            }
 
         // Change the owner and group
         inode.uid = owner;
@@ -986,21 +985,59 @@ int fs::my_cp(const string& srcPath, const string& destPath){
     if(fd != -1){
         struct stat fileStat;
         if(my_stat(absSrcPath, fileStat)){
-            my_lseek(fd, 0, SEEK_SET);
-            char buffer[fileStat.st_size];
-            my_read(fd, buffer, fileStat.st_size);
-            my_close(fd);
-            int newFd = my_creat(absDestPath, S_IRUSR | S_IWUSR);
-            if(fd != -1){
-                Inode inode;
-                readInode(disk, newFd, inode);
-                my_lseek(newFd, 0, SEEK_SET);
-                my_write(newFd, buffer, fileStat.st_size);
-                my_close(newFd);
-                rc = 0;
-            } else {
-                cout << "Failed to create destination file" << endl;
+            if(!my_lseek(fd, 0, SEEK_SET)){
+                cout << "Failed to move file pointer" << endl;
+                return -1;
             }
+
+            if(fileStat.st_uid != uid){
+                cerr << "Permission denied" << endl;
+                return -1;
+            }
+            if(fileStat.st_size > remainDatablocks * 4096){
+                cerr << "Not enough space" << endl;
+                return -1;
+            } else {
+                remainDatablocks -= (fileStat.st_size / 4096) + 1;
+            }
+
+            if(fileStat.st_size > 1024){
+                vector<char> buffer(fileStat.st_size);
+                my_read(fd, buffer.data(), fileStat.st_size);
+                my_close(fd);
+
+                int newFd = my_creat(absDestPath, S_IRUSR | S_IWUSR);
+                    if(fd != -1){
+                    Inode inode;
+                    readInode(disk, newFd, inode);
+                    my_lseek(newFd, 0, SEEK_SET);
+
+                    my_write(newFd, buffer.data(), fileStat.st_size);
+                    my_close(newFd);
+                    rc = 0;
+                } else {
+                    cout << "Failed to create destination file" << endl;
+                }
+            } else {
+                    char buffer[fileStat.st_size];
+                    my_read(fd, buffer, fileStat.st_size);
+                    my_close(fd);
+
+                    int newFd = my_creat(absDestPath, S_IRUSR | S_IWUSR);
+                    if(fd != -1){
+                    Inode inode;
+                    readInode(disk, newFd, inode);
+                    my_lseek(newFd, 0, SEEK_SET);
+
+                    
+                    my_write(newFd, buffer, fileStat.st_size);
+                    my_close(newFd);
+                    rc = 0;
+                } else {
+                    cout << "Failed to create destination file" << endl;
+                }
+            }
+            
         } else {
             cout << "Failed to get stats for file: " << srcPath << endl;
         }
@@ -1017,6 +1054,10 @@ int fs::my_mv(const string& srcPath, const string& destPath){
     string absDestPath = getAbsolutePath(destPath);
     int rc = my_cp(srcPath, destPath);
 
+    if(rc == -1){
+        return -1;
+    }
+
     string pathStr = absSrcPath;
     size_t pos = pathStr.find_last_of("/");
     string filename = pathStr.substr(pos + 1);
@@ -1024,16 +1065,27 @@ int fs::my_mv(const string& srcPath, const string& destPath){
     // Find the source file's parent directory and its dentry
     vector<dentry> srcParentDentries;
     int srcParentInum;
+    int srcInum = -1;
     findParent(disk, absSrcPath, srcParentDentries, srcParentInum);
 
     // Find the dentry for the source file and remove it
     int indexToRemove = -1;
     for (int i = 0; i < srcParentDentries[0].nEntries; ++i) {
         if (srcParentDentries[i].fname == filename) {
+            srcInum = srcParentDentries[i].inode;
             indexToRemove = i;
             break;
         }
     }
+
+    Inode srcInode;
+    readInode(disk, srcInum, srcInode);
+
+    if(srcInode.uid != uid){
+        cerr << "Permission denied" << endl;
+        return -1;
+    }
+
 
     if (indexToRemove != -1) {
         srcParentDentries.erase(srcParentDentries.begin() + indexToRemove);
@@ -1075,6 +1127,11 @@ int fs::my_rm(const vector<string>& name){
             // Read the inode from disk
             Inode inode;
             readInode(disk, inum, inode);
+
+            if(inode.uid != uid){
+                cerr << "Permission denied" << endl;
+                return -1;
+            }
 
             // Check if the file is a file
             if (inode.mode) {
@@ -1133,15 +1190,16 @@ int fs::my_ln(const string& srcPath, const string& destPath){
     for (int i = 0; i < parentDentry[0].nEntries; i++) {
         if (parentDentry[i].fname == filename) {
             inum = parentDentry[i].inode;
-            cout << "Inum: " << inum << endl;
-            cout << "Filename: " << filename << endl;
             break;
         }
     }
     
     Inode srcnode;
     readInode(disk, inum, srcnode);
-    cout << "Srcnode: " << srcnode.num << endl;
+    if(srcnode.uid != uid){
+        cerr << "Permission denied" << endl;
+        return -1;
+    }
 
     if(inum != -1){
         int fd = my_creat(absDestPath, srcnode.mode);
