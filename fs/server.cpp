@@ -221,6 +221,11 @@ vector<string> parse_command(const string& command, string& cwd){
                     disassembled_command.erase(disassembled_command.begin());
                 }
             }
+            cout << "command_sent_to_filesystem.size(): " << command_sent_to_filesystem.size() << endl;
+            for (int i = 0; i<command_sent_to_filesystem.size(); i++){
+                cout << "command_sent_to_filesystem[" << i << "]: " << command_sent_to_filesystem[i] << endl;
+            }
+            break;
         }
     }
 
