@@ -14,6 +14,7 @@
 #include "libraries/json_fwd.hpp"
 #include <fstream>
 #include <sstream>
+#include <filesystem> // C++17 or later
 #include "filesystem.h"
 
 using namespace std;
@@ -145,36 +146,33 @@ vector<string> disassemble_command(const string& command){
     return disassembled_command;
 }
 
-// function to load commands from commands.json
-json loadCommands() {
-  ifstream commandsFile("commands.json");
-  json commandsJson;
+// std::filesystem::path filePath = "commands.json";
 
-  // check if the file is opened successfully
-  if (!commandsFile.is_open()) {
-    ifstream commandsFile("commands.json");
+// // Get the absolute path
+// std::filesystem::path absolutePath = std::filesystem::absolute(filePath);
+
+// string json_path = absolutePath.string();
+
+
+// // TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
+// ifstream f(json_path);
+// json COMMAND_TEMPLATE = json::parse(f);
+
+// function to load commands.json
+json loadCommands(const string& directory) {
+    filesystem::path filePath = filesystem::absolute(directory) / "commands.json";
+    filePath = filesystem::weakly_canonical(filePath);
+    ifstream commandsFile(filePath);
+    if (!commandsFile.is_open()) {
+        throw runtime_error("Failed to open json file: " + filePath.string());
+    }
     json commandsJson;
-  }
-
-  if (!commandsFile.is_open()) {
-    cerr << "Error opening commands.json" << endl;
-    
-    return json();
-  }
-
-  try {
     commandsFile >> commandsJson;
-  } catch (const json::parse_error& e) {
-    cerr << "error parsing commands.json" << e.what() << endl;
-
-    return json();
-  }
-  
-  return commandsJson;
+    return commandsJson;
 }
 
-// call the commands
-json COMMAND_TEMPLATE = loadCommands();
+string jsonDirectory = "./fs/";
+json COMMAND_TEMPLATE = loadCommands(jsonDirectory);
 
 vector<string> parse_command(const string& command, string& cwd){
     Path cwd_path = Path(cwd);
@@ -247,6 +245,8 @@ vector<string> parse_command(const string& command, string& cwd){
 // -----------------------------
 int main() {
 
+
+   //cout << json_path << endl;
   // create the server socket here
   int server = socket(AF_INET, SOCK_STREAM, 0); // AF_INET is IPv4, SOCK_STREAM is TCP, 0 is IP
   if (server < 0) {
