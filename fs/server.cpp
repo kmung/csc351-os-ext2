@@ -26,17 +26,6 @@ using json = nlohmann::json;
 #define PORT 8080 // port 8080 is common application web server port
 #define MAX_BUFFER_SIZE 4096 // max buffer size for incoming data
 
-// function to load commands from commands.json
-nlohmann::json loadCommands() {
-  ifstream commandsFile("commands.json");
-  nlohmann::json commandsJson;
-  commandsFile >> commandsJson;
-  return commandsJson;
-}
-
-// call the commands
-// nlohmann::json commands = loadCommands();
-
 class Path {
     vector<string> disassembled_path;
     bool is_absolute = false;
@@ -159,11 +148,37 @@ vector<string> disassemble_command(const string& command){
     return disassembled_command;
 }
 
-string json_path = "/home/ckmung/Documents/csc351/csc351-os-ext2/fs/commands.json";
+// string json_path = "/home/ckmung/Documents/csc351/csc351-os-ext2/fs/commands.json";
 
-// TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
-ifstream f(json_path);
-json COMMAND_TEMPLATE = json::parse(f);
+// // TODO: MAKE SURE NOT TO USE YOUR OWN SYSTEM PATHS
+// ifstream f(json_path);
+// json COMMAND_TEMPLATE = json::parse(f);
+
+// function to load commands from commands.json
+json loadCommands() {
+  ifstream commandsFile("commands.json");
+  json commandsJson;
+
+  // check if json file is opened successfully
+  if (!commandsFile.is_open()) {
+    cerr << "Error opening commands.json" << endl;
+
+    return json();
+  }
+
+  try {
+    commandsFile >> commandsJson;
+  } catch (const json::parse_error& e) {
+    cerr << "Error parsing commands.json: " << e.what() << endl;
+
+    return json();
+  }
+
+  return commandsJson;
+}
+
+// call the commands
+json COMMAND_TEMPLATE = loadCommands();
 
 vector<string> parse_command(const string& command, string& cwd){
     Path cwd_path = Path(cwd);
@@ -186,10 +201,6 @@ vector<string> parse_command(const string& command, string& cwd){
                 }
             }
 
-            // if (no_of_args < disassembled_command.size() - 1){
-            //     throw invalid_argument("Too many arguments");
-            // }
-
             if (no_of_required_args > disassembled_command.size() - 1){
                 throw invalid_argument("Too few arguments");
             }
@@ -207,14 +218,6 @@ vector<string> parse_command(const string& command, string& cwd){
 
                 if (!disassembled_command.empty()){
                     string argument = disassembled_command[0];
-                    // if (arg["type"] == "path"){
-                    //     Path path = Path(argument);
-                    //     argument = Path::make_absolute(cwd_path, path).format();
-                    // }else{
-                    //     cout << "Invalid argument type" << endl;
-                    //     throw invalid_argument("Invalid argument type\n "
-                    //                            "This is caused by an internal error in the command template");
-                    // }
                     command_sent_to_filesystem.push_back(argument);
                     disassembled_command.erase(disassembled_command.begin());
                 }
@@ -344,15 +347,15 @@ int main() {
                         filesystem.my_cd(command_parsed[1]);
                     }
                 }else if (command_parsed[0] == "mkdir"){
-                    filesystem.my_mkdir(command_parsed);
+                    filesystem.my_mkdir(command_parsed[1]);
                 }else if (command_parsed[0] == "Lcp"){
                     filesystem.my_Lcp(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "lcp"){
                     filesystem.my_lcp(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "rm"){
-                    filesystem.my_rm(command_parsed);
+                    filesystem.my_rm(command_parsed[1]);
                 }else if (command_parsed[0] == "rmdir"){
-                    filesystem.my_rmdir(command_parsed);
+                    filesystem.my_rmdir(command_parsed[1]);
                 }else if (command_parsed[0] == "chown"){
                     filesystem.my_chown(command_parsed[1], stoi(command_parsed[2]), stoi(command_parsed[3]));
                 }else if (command_parsed[0] == "cp"){
@@ -360,7 +363,7 @@ int main() {
                 }else if (command_parsed[0] == "mv"){
                     filesystem.my_mv(command_parsed[1], command_parsed[2]);
                 }else if (command_parsed[0] == "cat"){
-                    finalOutput += filesystem.my_cat(command_parsed);
+                    finalOutput += filesystem.my_cat(command_parsed[1]);
                 }else if (command_parsed[0] == "ln"){
                     filesystem.my_ln(command_parsed[1], command_parsed[2]);
                 } else if (command_parsed[0] == "shutdown"){

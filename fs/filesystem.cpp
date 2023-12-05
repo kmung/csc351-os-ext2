@@ -786,61 +786,17 @@ string fs::my_cd(const string& name){
         curPath += "/" + pathComponents[i];
     }
 
-
-    // if(pathComponents[0] == ".."){
-    //     cout << "Inuput was .." << endl;
-    //     vector<dentry> parentDentry;
-    //     int parentInum;
-    //     findParent(disk, curPath, parentDentry, parentInum);
-    //     curInum = parentInum;
-
-    //     while (getline(issPath, token, '/')){
-    //         currentPath.push_back(token);
-    //     }
-
-    //     if(currentPath.size() > 1){
-    //         for (int i = 1; i < currentPath.size() - 1; i++) {
-    //             vector<dentry> entries;
-    //             readDentry(disk, entries, curInum);
-    //             // Check if the file exists in the current directory
-    //             for (int j = 0; j < entries[0].nEntries; j++) {
-    //                 if (entries[j].fname == currentPath[i]) {
-    //                     // The file exists, update current path and current inode
-    //                     curPath += "/" + currentPath[i];
-    //                     break;
-    //                 } 
-    //             }
-    //         }
-    //     }
-
-    //     ss << curPath << endl;
-
-    //     return ss.str();
-    // }
-
-    // for (int i = 0; i < pathComponents.size(); i++) {
-    //     vector<dentry> entries;
-    //     readDentry(disk, entries, curInum);
-        
-    //     // Check if the file exists in the current directory
-    //     for (int j = 1; j < entries[0].nEntries; j++) {
-            
-    //         if (entries[j].fname == pathComponents[i]) {
-                
-    //                 // The file exists, update current path and current inode
-    //                 curPath = "/" + pathComponents[i];
-                
-    //             curInum = entries[j].inode;
-    //             break;
-                
-    //         } 
-    //     }
-    // }
-
     ss << curPath << endl;
 
     return ss.str();
 
+}
+
+string fs::my_cd(){
+    curPath = "root";
+    curInum = 1;
+    
+    return curPath;
 }
 
 //******************************************************************************
